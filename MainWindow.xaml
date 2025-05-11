@@ -4,9 +4,78 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DLGameViewer"
+        xmlns:conv="clr-namespace:DLGameViewer.Converters"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="DL Game Viewer" Height="720" Width="1280">
+    <Window.Resources>
+        <conv:LocalPathToImageSourceConverter x:Key="LocalPathToImageSourceConverterInstance"/>
+    </Window.Resources>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Scan Controls Title -->
+            <RowDefinition Height="Auto"/> <!-- Scan Folder Path & Buttons -->
+            <RowDefinition Height="Auto"/> <!-- Results Title -->
+            <RowDefinition Height="150"/>  <!-- Scan Results TextBox -->
+            <RowDefinition Height="Auto"/> <!-- Game List Title -->
+            <RowDefinition Height="*"/>   <!-- Game List ItemsControl -->
+        </Grid.RowDefinitions>
 
+        <!-- Scan Controls -->
+        <TextBlock Grid.Row="0" Text="폴더 스캔" FontSize="20" FontWeight="Bold" Margin="0,0,0,10"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="스캔할 폴더 경로:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <TextBox x:Name="txtScanFolderPath" Width="350" Margin="0,0,5,0" IsReadOnly="True" VerticalAlignment="Center" Text="(선택된 폴더 없음)"/>
+            <Button x:Name="btnBrowseFolder" Content="폴더 선택..." Width="100" Height="30" Click="btnBrowseFolder_Click" Margin="0,0,5,0" VerticalAlignment="Center"/>
+            <Button x:Name="btnScanFolder" Content="폴더 스캔 시작" Width="120" Height="30" Click="btnScanFolder_Click" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Results -->
+        <TextBlock Grid.Row="2" Text="스캔 결과:" FontWeight="Bold" Margin="0,10,0,5"/>
+        <TextBox Grid.Row="3" x:Name="txtScanResults" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" IsReadOnly="True" Background="#FFEFEFEF" Padding="5"/>
+
+        <!-- Game List -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="게임 목록:" FontSize="16" FontWeight="Bold" Margin="0,0,5,0"/>
+            <Button x:Name="btnRefreshGameList" Content="게임 목록 새로고침" Width="120" Height="30" Click="btnRefreshGameList_Click" VerticalAlignment="Center"/>
+        </StackPanel>
+        <ScrollViewer Grid.Row="5" VerticalScrollBarVisibility="Auto" Margin="0,0,0,0">
+            <ItemsControl x:Name="GamesItemsControl">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" ItemWidth="200" ItemHeight="300"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="LightGray" BorderThickness="1" Margin="10" Padding="5" Background="White">
+                            <StackPanel Orientation="Vertical">
+                                <Grid Width="180" Height="240" Margin="0,0,0,5">
+                                    <Image x:Name="GameCoverImage"
+                                           Stretch="Uniform"
+                                           Source="{Binding LocalImagePath, Converter={StaticResource LocalPathToImageSourceConverterInstance}}"/>
+                                    <TextBlock Text="None"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="20"
+                                               Foreground="DarkGray">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Source, ElementName=GameCoverImage}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" Height="Auto" MaxHeight="40" VerticalAlignment="Top"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
     </Grid>
 </Window>

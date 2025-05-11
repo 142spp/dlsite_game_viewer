@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DLGameViewer", "DLGameViewer.csproj", "{7013B61E-0D9C-5DE4-FFE7-C5737B28EDC3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7013B61E-0D9C-5DE4-FFE7-C5737B28EDC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7013B61E-0D9C-5DE4-FFE7-C5737B28EDC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7013B61E-0D9C-5DE4-FFE7-C5737B28EDC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7013B61E-0D9C-5DE4-FFE7-C5737B28EDC3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BAE6DC18-B803-4AB8-9D59-26746E52CB31}
+	EndGlobalSection
+EndGlobal
