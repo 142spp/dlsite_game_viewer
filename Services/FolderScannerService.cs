@@ -16,18 +16,15 @@ namespace DLGameViewer.Services
         private readonly WebMetadataService _webMetadataService;
 
         // 생성자 추가: DatabaseService와 WebMetadataService를 주입받음
-        public FolderScannerService(DatabaseService databaseService, WebMetadataService webMetadataService)
-        {
+        public FolderScannerService(DatabaseService databaseService, WebMetadataService webMetadataService){
             _databaseService = databaseService;
             _webMetadataService = webMetadataService;
         }
 
-        public async Task<List<GameInfo>> ScanDirectoryAsync(string directoryPath)
-        {
+        public async Task<List<GameInfo>> ScanDirectoryAsync(string directoryPath){
             var foundGames = new List<GameInfo>();
 
-            if (!Directory.Exists(directoryPath))
-            {
+            if (!Directory.Exists(directoryPath)){
                 return foundGames;
             }
 
@@ -35,18 +32,15 @@ namespace DLGameViewer.Services
             // GetDirectories는 Task-returning 오버로드가 없으므로, Task.Run으로 감싸서 비동기적으로 실행합니다.
             var subDirectories = await Task.Run(() => Directory.GetDirectories(directoryPath));
 
-            foreach (var subDirPath in subDirectories)
-            {
+            foreach (var subDirPath in subDirectories){
                 string folderName = Path.GetFileName(subDirPath); // 폴더 경로에서 폴더 이름만 추출
                 Match match = IdentifierRegex.Match(folderName);
 
-                if (match.Success)
-                {
+                if (match.Success){
                     string identifier = match.Value.Replace("_", "").Replace(" ", "").ToUpper(); // 공백, 밑줄 제거 및 대문자화
                     
                     // 임시 게임 정보 생성
-                    var gameInfo = new GameInfo
-                    {
+                    var gameInfo = new GameInfo{
                         Identifier = identifier, 
                         Title = folderName, 
                         FolderPath = subDirPath,
@@ -56,6 +50,7 @@ namespace DLGameViewer.Services
                     var executables = await Task.Run(() => 
                         Directory.GetFiles(subDirPath, "*.exe")
                                  .Concat(Directory.GetFiles(subDirPath, "*.html"))
+                                 .Concat(Directory.GetFiles(subDirPath, "*.swf"))
                                  .ToList()
                     );
                     gameInfo.ExecutableFiles.AddRange(executables);

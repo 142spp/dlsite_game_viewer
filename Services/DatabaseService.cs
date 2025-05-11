@@ -5,14 +5,18 @@ using System.IO;
 using System.Collections.Generic; // List<GameInfo>를 위해 추가
 // using Newtonsoft.Json; // JsonConvert를 사용하지 않으므로 주석 처리 또는 삭제
 
-namespace DLGameViewer.Services
-{
-    public class DatabaseService
-    {
+enum DatabaseError {
+    Success,
+    DuplicateIdentifier,
+    DatabaseError,
+    UnknownError,
+}
+
+namespace DLGameViewer.Services {
+    public class DatabaseService {
         private readonly string _databasePath;
 
-        public DatabaseService()
-        {
+        public DatabaseService() {
             // 애플리케이션 실행 파일이 있는 디렉토리를 기준으로 Data 폴더 경로 설정
             //string executablePath = AppDomain.CurrentDomain.BaseDirectory;
             //string projectRootPath = Path.GetFullPath(Path.Combine(executablePath, "../../..")); // 일반적인 .NET 프로젝트 구조에서 프로젝트 루트 추정
@@ -25,8 +29,7 @@ namespace DLGameViewer.Services
             // 좀 더 견고한 방법은 설정 파일에서 경로를 읽거나, 사용자 정의 가능한 경로를 사용하는 것
             // 여기서는 프로젝트 개발 중 단순화를 위해 상대 경로를 사용
             string projectRootPath = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..")); 
-            if (!Directory.Exists(Path.Combine(projectRootPath, "Data")) && Directory.Exists(baseDir)) // 개발 중 VSCode 실행 경로 대응
-            {
+            if (!Directory.Exists(Path.Combine(projectRootPath, "Data")) && Directory.Exists(baseDir)) { // 개발 중 VSCode 실행 경로 대응
                 projectRootPath = baseDir; // 터미널에서 직접 dotnet run 하는 경우 BaseDirectory가 프로젝트 루트일 수 있음
             }
             
@@ -37,10 +40,8 @@ namespace DLGameViewer.Services
             InitializeDatabase();
         }
 
-        private void InitializeDatabase()
-        {
-            using (var connection = new SqliteConnection($"Data Source={_databasePath}"))
-            {
+        private void InitializeDatabase() {
+            using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
                 connection.Open();
 
                 var command = connection.CreateCommand();
@@ -59,6 +60,7 @@ namespace DLGameViewer.Services
                         Genres TEXT, -- Comma-separated values
                         Rating TEXT,
                         CoverImageUrl TEXT,
+                        CoverImagePath TEXT,
                         LocalImagePath TEXT,
                         FolderPath TEXT UNIQUE NOT NULL,
                         ExecutableFiles TEXT, -- Comma-separated values
@@ -74,17 +76,15 @@ namespace DLGameViewer.Services
         // 예: public List<GameInfo> GetAllGames() { ... }
         // 예: public GameInfo GetGameByIdentifier(string identifier) { ... }
 
-        public long AddGame(GameInfo game)
-        {
-            using (var connection = new SqliteConnection($"Data Source={_databasePath}"))
-            {
+        public long AddGame(GameInfo game) {
+            using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
                 connection.Open();
 
                 var command = connection.CreateCommand();
                 command.CommandText =
                 @"
-                    INSERT INTO GameInfo (Identifier, Title, Creator, Genres, Rating, CoverImageUrl, LocalImagePath, FolderPath, ExecutableFiles, AdditionalMetadata)
-                    VALUES ($Identifier, $Title, $Creator, $Genres, $Rating, $CoverImageUrl, $LocalImagePath, $FolderPath, $ExecutableFiles, $AdditionalMetadata);
+                    INSERT INTO GameInfo (Identifier, Title, Creator, Genres, Rating, CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, ExecutableFiles, AdditionalMetadata)
+                    VALUES ($Identifier, $Title, $Creator, $Genres, $Rating, $CoverImageUrl, $CoverImagePath, $LocalImagePath, $FolderPath, $ExecutableFiles, $AdditionalMetadata);
                     
                     SELECT last_insert_rowid(); // 삽입된 행의 ID를 반환
                 ";
@@ -95,40 +95,45 @@ namespace DLGameViewer.Services
                 command.Parameters.AddWithValue("$Genres", game.Genres.Any() ? string.Join(",", game.Genres) : (object)DBNull.Value);
                 command.Parameters.AddWithValue("$Rating", game.Rating ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$CoverImageUrl", game.CoverImageUrl ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$CoverImagePath", game.CoverImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$LocalImagePath", game.LocalImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$FolderPath", game.FolderPath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$ExecutableFiles", game.ExecutableFiles.Any() ? string.Join(",", game.ExecutableFiles) : (object)DBNull.Value);
                 command.Parameters.AddWithValue("$AdditionalMetadata", game.AdditionalMetadata ?? (object)DBNull.Value);
 
                 // ExecuteScalar는 INSERT 후 last_insert_rowid() 값을 반환
-                long newId = Convert.ToInt64(command.ExecuteScalar());
-                return newId;
+                try {
+                    long newId = Convert.ToInt64(command.ExecuteScalar());
+                    return newId;
+                }
+                catch (SqliteException ex) {
+                    if (ex.SqliteErrorCode == 19) {
+                        return (long) DatabaseError.DuplicateIdentifier;
+                    } else {
+                        return (long) DatabaseError.DatabaseError;
+                    }
+                }
             }
         }
 
-        public List<GameInfo> GetAllGames()
-        {
+        public List<GameInfo> GetAllGames() {
             var games = new List<GameInfo>();
 
-            using (var connection = new SqliteConnection($"Data Source={_databasePath}"))
-            {
+            using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
                 connection.Open();
 
                 var command = connection.CreateCommand();
                 command.CommandText =
                 @"
                     SELECT Id, Identifier, Title, Creator, Genres, Rating, 
-                           CoverImageUrl, LocalImagePath, FolderPath, 
+                           CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, 
                            ExecutableFiles, AdditionalMetadata
                     FROM GameInfo;
                 ";
 
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        var game = new GameInfo
-                        {
+                using (var reader = command.ExecuteReader()) {
+                    while (reader.Read()) {
+                        var game = new GameInfo {
                             Id = reader.GetInt64(0),
                             Identifier = reader.GetString(1),
                             Title = reader.GetString(2),
@@ -136,10 +141,11 @@ namespace DLGameViewer.Services
                             Genres = reader.IsDBNull(4) ? new List<string>() : reader.GetString(4).Split(',').ToList(),
                             Rating = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                             CoverImageUrl = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                            LocalImagePath = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
-                            FolderPath = reader.GetString(8),
-                            ExecutableFiles = reader.IsDBNull(9) ? new List<string>() : reader.GetString(9).Split(',').ToList(),
-                            AdditionalMetadata = reader.IsDBNull(10) ? string.Empty : reader.GetString(10)
+                            CoverImagePath = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                            LocalImagePath = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                            FolderPath = reader.GetString(9),
+                            ExecutableFiles = reader.IsDBNull(10) ? new List<string>() : reader.GetString(10).Split(',').ToList(),
+                            AdditionalMetadata = reader.IsDBNull(11) ? string.Empty : reader.GetString(11)
                         };
                         games.Add(game);
                     }
@@ -148,31 +154,26 @@ namespace DLGameViewer.Services
             return games;
         }
 
-        public GameInfo? GetGameById(long id)
-        {
+        public GameInfo? GetGameById(long id) {
             GameInfo? game = null;
 
-            using (var connection = new SqliteConnection($"Data Source={_databasePath}"))
-            {
+            using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
                 connection.Open();
 
                 var command = connection.CreateCommand();
                 command.CommandText =
                 @"
                     SELECT Id, Identifier, Title, Creator, Genres, Rating, 
-                           CoverImageUrl, LocalImagePath, FolderPath, 
+                           CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, 
                            ExecutableFiles, AdditionalMetadata
                     FROM GameInfo
                     WHERE Id = $Id;
                 ";
                 command.Parameters.AddWithValue("$Id", id);
 
-                using (var reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        game = new GameInfo
-                        {
+                using (var reader = command.ExecuteReader()) {
+                    if (reader.Read()) {
+                        game = new GameInfo {
                             Id = reader.GetInt64(0),
                             Identifier = reader.GetString(1),
                             Title = reader.GetString(2),
@@ -180,10 +181,11 @@ namespace DLGameViewer.Services
                             Genres = reader.IsDBNull(4) ? new List<string>() : reader.GetString(4).Split(',').ToList(),
                             Rating = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                             CoverImageUrl = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                            LocalImagePath = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
-                            FolderPath = reader.GetString(8),
-                            ExecutableFiles = reader.IsDBNull(9) ? new List<string>() : reader.GetString(9).Split(',').ToList(),
-                            AdditionalMetadata = reader.IsDBNull(10) ? string.Empty : reader.GetString(10)
+                            CoverImagePath = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                            LocalImagePath = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                            FolderPath = reader.GetString(9),
+                            ExecutableFiles = reader.IsDBNull(10) ? new List<string>() : reader.GetString(10).Split(',').ToList(),
+                            AdditionalMetadata = reader.IsDBNull(11) ? string.Empty : reader.GetString(11)
                         };
                     }
                 }
@@ -191,10 +193,8 @@ namespace DLGameViewer.Services
             return game;
         }
 
-        public int UpdateGame(GameInfo game)
-        {
-            using (var connection = new SqliteConnection($"Data Source={_databasePath}"))
-            {
+        public int UpdateGame(GameInfo game) {
+            using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
                 connection.Open();
 
                 var command = connection.CreateCommand();
@@ -207,6 +207,7 @@ namespace DLGameViewer.Services
                         Genres = $Genres,
                         Rating = $Rating,
                         CoverImageUrl = $CoverImageUrl,
+                        CoverImagePath = $CoverImagePath,
                         LocalImagePath = $LocalImagePath,
                         FolderPath = $FolderPath,
                         ExecutableFiles = $ExecutableFiles,
@@ -220,6 +221,7 @@ namespace DLGameViewer.Services
                 command.Parameters.AddWithValue("$Genres", game.Genres.Any() ? string.Join(",", game.Genres) : (object)DBNull.Value);
                 command.Parameters.AddWithValue("$Rating", game.Rating ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$CoverImageUrl", game.CoverImageUrl ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$CoverImagePath", game.CoverImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$LocalImagePath", game.LocalImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$FolderPath", game.FolderPath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$ExecutableFiles", game.ExecutableFiles.Any() ? string.Join(",", game.ExecutableFiles) : (object)DBNull.Value);
@@ -230,10 +232,8 @@ namespace DLGameViewer.Services
             }
         }
 
-        public int DeleteGame(long id)
-        {
-            using (var connection = new SqliteConnection($"Data Source={_databasePath}"))
-            {
+        public int DeleteGame(long id) {
+            using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
                 connection.Open();
 
                 var command = connection.CreateCommand();

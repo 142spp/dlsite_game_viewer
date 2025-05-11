@@ -1,0 +1,35 @@
+<Window x:Class="DLGameViewer.Dialogs.ExecutableSelectionDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DLGameViewer.Dialogs"
+        mc:Ignorable="d"
+        Title="실행 파일 선택" Height="300" Width="400"
+        WindowStartupLocation="CenterOwner"
+        Icon="/Resources/favicon.ico"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="실행할 파일을 선택하세요" Margin="0,0,0,10"/>
+
+        <ListBox Grid.Row="1" x:Name="ExecutableListBox" Margin="0,0,0,10" SelectionMode="Single" MouseDoubleClick="ExecutableListBox_MouseDoubleClick">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="OkButton" Content="확인" Width="75" Height="30" IsDefault="True" Click="OkButton_Click" VerticalContentAlignment="Center"/>
+            <Button Content="취소" Width="75" Height="30" IsCancel="True" Margin="5,0,0,0" VerticalContentAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</Window> 

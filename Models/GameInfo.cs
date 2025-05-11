@@ -25,6 +25,9 @@ namespace DLGameViewer.Models
         // 웹에서 가져온 커버 이미지 URL
         public string CoverImageUrl { get; set; } // 대표 커버 이미지 하나만 우선 저장
 
+        // 커버 이미지 파일 경로
+        public string CoverImagePath { get; set; }
+
         // 로컬에 저장된 커버 이미지 파일 경로
         public string LocalImagePath { get; set; }
 
@@ -48,6 +51,7 @@ namespace DLGameViewer.Models
             Creator = string.Empty;
             Rating = string.Empty;
             CoverImageUrl = string.Empty;
+            CoverImagePath = string.Empty;
             LocalImagePath = string.Empty;
             FolderPath = string.Empty;
             AdditionalMetadata = string.Empty;

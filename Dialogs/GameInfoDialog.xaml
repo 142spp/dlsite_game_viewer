@@ -1,0 +1,131 @@
+<Window x:Class="DLGameViewer.Dialogs.GameInfoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DLGameViewer.Dialogs"
+        xmlns:conv="clr-namespace:DLGameViewer.Converters" 
+        mc:Ignorable="d"
+        Title="게임 정보" Height="800" Width="1200"
+        Icon="/Resources/favicon.ico"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        ResizeMode="CanResizeWithGrip">
+    <Window.Resources>
+        <conv:LocalPathToImageSourceConverter x:Key="LocalPathToImageSourceConverterInstance"/>
+    </Window.Resources>
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="560"/>
+                    <ColumnDefinition Width="Auto" MinWidth="220" MaxWidth="580"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <Label Content="식별자:" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="IdentifierTextBlock" Margin="5,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <Label Content="제목:" Margin="0,10,0,0"/>
+                    <TextBox x:Name="TitleTextBox" Margin="5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" MaxHeight="100"/>
+
+                    <Label Content="제작자/서클:" Margin="0,10,0,0"/>
+                    <TextBox x:Name="CreatorTextBox" Margin="5" Padding="5"/>
+
+                    <Label Content="장르 (쉼표로 구분):" Margin="0,10,0,0"/>
+                    <TextBox x:Name="GenresTextBox" Margin="5" Padding="5" AcceptsReturn="True" TextWrapping="Wrap"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,5,5,0">
+                        <Label Content="평점:" Margin="0,0,0,0" VerticalAlignment="Center"/>
+                        <TextBox x:Name="RatingTextBox" FontSize="16" Width="50" Height="35" Padding="5" TextAlignment="Right" VerticalContentAlignment="Center" IsReadOnly="True"/>
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5,0,0,0">
+                            <Button x:Name="RatingUpButton" FontSize="10" Content="▲" Width="30" Height="18" Margin="0,0,0,1" Click="RatingUpButton_Click" ToolTip="평점 올리기" VerticalContentAlignment="Center"/>
+                            <Button x:Name="RatingDownButton" FontSize="10" Content="▼" Width="30" Height="18" Margin="0,1,0,0" Click="RatingDownButton_Click"  ToolTip="평점 내리기" VerticalContentAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Expander Header="세부 메타데이터 (펼치기/접기)" Margin="0,15,0,0">
+                        <StackPanel Margin="5">
+                            <Label Content="커버 이미지 URL:"/>
+                            <TextBox x:Name="CoverImageUrlTextBox" Margin="5,0,5,5" Padding="5" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="80"/>
+
+                            <Label Content="로컬 이미지 폴더:" Margin="0,5,0,0"/>
+                            <TextBox x:Name="LocalImagePathTextBox" Margin="5,0,5,5" Padding="5" IsReadOnly="True"/>
+
+                            <Label Content="원본 폴더 경로:" Margin="0,5,0,0"/>
+                            <TextBox x:Name="FolderPathTextBox" Margin="5,0,5,5" Padding="5" IsReadOnly="True"/>
+
+                            <Label Content="실행 파일 목록 (읽기 전용):" Margin="0,5,0,0"/>
+                            <TextBox x:Name="ExecutableFilesTextBox" Margin="5,0,5,5" Padding="5" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="100"/>
+                        </StackPanel>
+                    </Expander>
+
+                    <Label Content="추가 설명:" Margin="0,15,0,0"/>
+                    <TextBox x:Name="AdditionalMetadataTextBox" Margin="5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Height="150"/>
+                </StackPanel>
+
+                <Grid Grid.Column="1" Margin="10,0,0,0" Height="600" MaxHeight="600" MaxWidth="560" VerticalAlignment="Top">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" MaxHeight="420"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto" MaxHeight="120"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" BorderBrush="LightGray" BorderThickness="1" VerticalAlignment="Top" HorizontalAlignment="Center" >
+                        <Grid>
+                            <Image x:Name="MainCoverImage" 
+                                   Source="{Binding DisplayedFullImagePath, Converter={StaticResource LocalPathToImageSourceConverterInstance}, ConverterParameter='MainImageContent', FallbackValue={x:Null}, TargetNullValue={x:Null}}"
+                                   Stretch="Uniform" MinWidth="400" MinHeight="300" MaxWidth="560" MaxHeight="420"/>
+                            <TextBlock Text="이미지 없음" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" Foreground="DarkGray">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DisplayedFullImagePath}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DisplayedFullImagePath}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" >
+                        <ItemsControl x:Name="PreviewImagesItemsControl" ItemsSource="{Binding PreviewImageFilePaths}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="Gray" BorderThickness="1" Margin="2,0,2,0" Cursor="Hand">
+                                        <Image Source="{Binding Converter={StaticResource LocalPathToImageSourceConverterInstance}, ConverterParameter='PreviewImageContent'}" 
+                                               Width="100" Height="100" Stretch="Uniform"
+                                               MouseUp="PreviewImage_MouseUp"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button x:Name="SaveButton" Content="저장" Width="75" Height="30" IsDefault="True" Click="SaveButton_Click" VerticalContentAlignment="Center"/>
+            <Button Content="취소" Width="75" Height="30" IsCancel="True" Margin="5,0,0,0" VerticalContentAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</Window> 
