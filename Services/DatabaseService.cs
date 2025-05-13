@@ -3,13 +3,14 @@ using DLGameViewer.Models; // GameInfo 모델을 사용하기 위해 추가
 using System;
 using System.IO;
 using System.Collections.Generic; // List<GameInfo>를 위해 추가
+using System.Text.Json; // JSON 직렬화를 위해 추가
 // using Newtonsoft.Json; // JsonConvert를 사용하지 않으므로 주석 처리 또는 삭제
 
 enum DatabaseError {
-    Success,
-    DuplicateIdentifier,
-    DatabaseError,
-    UnknownError,
+    Success = 0,
+    DuplicateIdentifier = -1,
+    DatabaseError = -2,
+    UnknownError = -3,
 }
 
 namespace DLGameViewer.Services {
@@ -71,6 +72,65 @@ namespace DLGameViewer.Services {
             }
         }
 
+        // 데이터베이스 초기화(재설정) 메서드
+        // 이 메서드는 기존 데이터를 모두 삭제하고 테이블을 재생성합니다.
+        public void ResetDatabase() {
+            using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
+                connection.Open();
+                
+                // 트랜잭션 시작
+                using (var transaction = connection.BeginTransaction()) {
+                    try {
+                        var command = connection.CreateCommand();
+                        
+                        // 기존 테이블 삭제
+                        command.CommandText = "DROP TABLE IF EXISTS GameInfo;";
+                        command.ExecuteNonQuery();
+                        
+                        // 테이블 재생성
+                        command.CommandText = 
+                        @"
+                            CREATE TABLE IF NOT EXISTS GameInfo (
+                                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                Identifier TEXT UNIQUE NOT NULL,
+                                Title TEXT NOT NULL,
+                                Creator TEXT,
+                                Genres TEXT,
+                                Rating TEXT,
+                                CoverImageUrl TEXT,
+                                CoverImagePath TEXT,
+                                LocalImagePath TEXT,
+                                FolderPath TEXT UNIQUE NOT NULL,
+                                ExecutableFiles TEXT,
+                                AdditionalMetadata TEXT
+                            );
+                        ";
+                        command.ExecuteNonQuery();
+                        
+                        // 트랜잭션 커밋
+                        transaction.Commit();
+                    }
+                    catch (Exception) {
+                        // 오류 발생 시 롤백
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+        
+        // 데이터베이스에서 모든 게임 데이터만 삭제하고 테이블 구조는 유지하는 메서드
+        public int ClearAllGames() {
+            using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
+                connection.Open();
+                
+                var command = connection.CreateCommand();
+                command.CommandText = "DELETE FROM GameInfo;";
+                
+                return command.ExecuteNonQuery(); // 삭제된 행의 수 반환
+            }
+        }
+
         // 여기에 CRUD 및 기타 데이터베이스 작업 메서드들이 추가될 예정입니다.
         // 예: public void AddGame(GameInfo game) { ... }
         // 예: public List<GameInfo> GetAllGames() { ... }
@@ -92,13 +152,13 @@ namespace DLGameViewer.Services {
                 command.Parameters.AddWithValue("$Identifier", game.Identifier);
                 command.Parameters.AddWithValue("$Title", game.Title);
                 command.Parameters.AddWithValue("$Creator", game.Creator ?? (object)DBNull.Value);
-                command.Parameters.AddWithValue("$Genres", game.Genres.Any() ? string.Join(",", game.Genres) : (object)DBNull.Value);
+                command.Parameters.AddWithValue("$Genres", game.Genres.Any() ? JsonSerializer.Serialize(game.Genres) : (object)DBNull.Value);
                 command.Parameters.AddWithValue("$Rating", game.Rating ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$CoverImageUrl", game.CoverImageUrl ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$CoverImagePath", game.CoverImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$LocalImagePath", game.LocalImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$FolderPath", game.FolderPath ?? (object)DBNull.Value);
-                command.Parameters.AddWithValue("$ExecutableFiles", game.ExecutableFiles.Any() ? string.Join(",", game.ExecutableFiles) : (object)DBNull.Value);
+                command.Parameters.AddWithValue("$ExecutableFiles", game.ExecutableFiles.Any() ? JsonSerializer.Serialize(game.ExecutableFiles) : (object)DBNull.Value);
                 command.Parameters.AddWithValue("$AdditionalMetadata", game.AdditionalMetadata ?? (object)DBNull.Value);
 
                 // ExecuteScalar는 INSERT 후 last_insert_rowid() 값을 반환
@@ -138,13 +198,13 @@ namespace DLGameViewer.Services {
                             Identifier = reader.GetString(1),
                             Title = reader.GetString(2),
                             Creator = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                            Genres = reader.IsDBNull(4) ? new List<string>() : reader.GetString(4).Split(',').ToList(),
+                            Genres = DeserializeList(reader, 4),
                             Rating = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                             CoverImageUrl = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
                             CoverImagePath = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
                             LocalImagePath = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
                             FolderPath = reader.GetString(9),
-                            ExecutableFiles = reader.IsDBNull(10) ? new List<string>() : reader.GetString(10).Split(',').ToList(),
+                            ExecutableFiles = DeserializeList(reader, 10),
                             AdditionalMetadata = reader.IsDBNull(11) ? string.Empty : reader.GetString(11)
                         };
                         games.Add(game);
@@ -178,19 +238,59 @@ namespace DLGameViewer.Services {
                             Identifier = reader.GetString(1),
                             Title = reader.GetString(2),
                             Creator = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                            Genres = reader.IsDBNull(4) ? new List<string>() : reader.GetString(4).Split(',').ToList(),
+                            Genres = DeserializeList(reader, 4),
                             Rating = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                             CoverImageUrl = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
                             CoverImagePath = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
                             LocalImagePath = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
                             FolderPath = reader.GetString(9),
-                            ExecutableFiles = reader.IsDBNull(10) ? new List<string>() : reader.GetString(10).Split(',').ToList(),
+                            ExecutableFiles = DeserializeList(reader, 10),
                             AdditionalMetadata = reader.IsDBNull(11) ? string.Empty : reader.GetString(11)
                         };
                     }
                 }
             }
             return game;
+        }
+
+        // JSON 문자열에서 문자열 리스트로 역직렬화하는 헬퍼 메서드
+        private List<string> DeserializeList(SqliteDataReader reader, int columnIndex) {
+            if (reader.IsDBNull(columnIndex))
+                return new List<string>();
+
+            string json = reader.GetString(columnIndex);
+            try {
+                // 호환성 유지: 이전 형식(쉼표로 구분된 문자열)인지 확인
+                if (!json.StartsWith("[") && json.Contains(",")) {
+                    return json.Split(',').ToList();
+                }
+                
+                // JSON 형식이면 역직렬화
+                return JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
+            }
+            catch {
+                // 역직렬화 실패 시 빈 리스트 반환
+                return new List<string>();
+            }
+        }
+
+        public bool IsGameExists(string identifier) {
+            using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
+                connection.Open();
+
+                var command = connection.CreateCommand();
+                command.CommandText =
+                @"
+                    SELECT COUNT(*) FROM GameInfo WHERE Identifier = $Identifier;
+                ";
+                command.Parameters.AddWithValue("$Identifier", identifier);
+
+                try {
+                    return Convert.ToInt32(command.ExecuteScalar()) > 0;
+                } catch (SqliteException) {
+                    return false;
+                }
+            }
         }
 
         public int UpdateGame(GameInfo game) {
@@ -218,13 +318,13 @@ namespace DLGameViewer.Services {
                 command.Parameters.AddWithValue("$Identifier", game.Identifier);
                 command.Parameters.AddWithValue("$Title", game.Title);
                 command.Parameters.AddWithValue("$Creator", game.Creator ?? (object)DBNull.Value);
-                command.Parameters.AddWithValue("$Genres", game.Genres.Any() ? string.Join(",", game.Genres) : (object)DBNull.Value);
+                command.Parameters.AddWithValue("$Genres", game.Genres.Any() ? JsonSerializer.Serialize(game.Genres) : (object)DBNull.Value);
                 command.Parameters.AddWithValue("$Rating", game.Rating ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$CoverImageUrl", game.CoverImageUrl ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$CoverImagePath", game.CoverImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$LocalImagePath", game.LocalImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$FolderPath", game.FolderPath ?? (object)DBNull.Value);
-                command.Parameters.AddWithValue("$ExecutableFiles", game.ExecutableFiles.Any() ? string.Join(",", game.ExecutableFiles) : (object)DBNull.Value);
+                command.Parameters.AddWithValue("$ExecutableFiles", game.ExecutableFiles.Any() ? JsonSerializer.Serialize(game.ExecutableFiles) : (object)DBNull.Value);
                 command.Parameters.AddWithValue("$AdditionalMetadata", game.AdditionalMetadata ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$Id", game.Id);
 

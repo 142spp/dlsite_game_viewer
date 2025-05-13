@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace DLGameViewer.Models
@@ -39,10 +40,7 @@ namespace DLGameViewer.Models
 
         // 기타 메타데이터 (예: 설명, 태그 등을 JSON 문자열 형태로 저장 가능)
         public string AdditionalMetadata { get; set; }
-
-        // 언제 데이터베이스에 추가되었는지 (선택적)
-        // public DateTime DateAdded { get; set; }
-
+        
         public GameInfo()
         {
             // 기본 생성자에서 Identifier, Title 등을 "" 로 초기화하여 null 참조 방지
