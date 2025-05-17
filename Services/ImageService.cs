@@ -2,9 +2,10 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using DLGameViewer.Interfaces;
 
 namespace DLGameViewer.Services {
-    public class ImageService {
+    public class ImageService : IImageService {
         private readonly string _baseImageSavePath;
         private static readonly HttpClient _httpClient = new HttpClient();
 
@@ -22,7 +23,7 @@ namespace DLGameViewer.Services {
             Directory.CreateDirectory(_baseImageSavePath); // 기본 이미지 저장 폴더가 없으면 생성
         }
 
-        public async Task<string?> DownloadAndSaveImageAsync(string imageUrl, string identifier, string fileName) {
+        public async Task<string> DownloadAndSaveImageAsync(string imageUrl, string identifier, string fileName) {
             if (string.IsNullOrWhiteSpace(imageUrl) || string.IsNullOrWhiteSpace(identifier) || string.IsNullOrWhiteSpace(fileName)) {
                 throw new ArgumentException("이미지 URL, 식별자, 또는 파일이름이 비어있습니다.");
             }

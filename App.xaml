@@ -2,8 +2,59 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:DLGameViewer"
-             StartupUri="MainWindow.xaml">
+             xmlns:styles="clr-namespace:DLGameViewer.Styles"
+             xmlns:utils="clr-namespace:DLGameViewer.Utils">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- 코어 리소스 (아이콘 등) -->
+                <ResourceDictionary Source="/Resources/CoreResources.xaml"/>
+                <!-- 공통 스타일 -->
+                <ResourceDictionary Source="/Styles/CommonStyles.xaml"/>
+                <!-- 초기 테마는 코드에서 로드됨 -->
+            </ResourceDictionary.MergedDictionaries>
+            
+            <!-- 컨버터 -->
+            <utils:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <utils:StringNotEmptyToBoolConverter x:Key="StringNotEmptyToBoolConverter"/>
+            
+            <!-- 서비스 로케이터 -->
+            <local:ViewModelLocator x:Key="ServiceLocator"/>
+            
+            <!-- 폰트 리소스 -->
+            <FontFamily x:Key="NotoSansKR">pack://application:,,,/Resources/Fonts/NotoSansKR-Regular.ttf#Noto Sans KR</FontFamily>
+            
+            <!-- 글로벌 폰트 설정 -->
+            <Style TargetType="{x:Type Control}">
+                <Setter Property="FontFamily" Value="{StaticResource NotoSansKR}"/>
+                <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
+                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="UseLayoutRounding" Value="True"/>
+            </Style>
+            <Style TargetType="{x:Type TextBlock}">
+                <Setter Property="FontFamily" Value="{StaticResource NotoSansKR}"/>
+                <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
+                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+                <Setter Property="UseLayoutRounding" Value="True"/>
+                <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+                <Setter Property="LineHeight" Value="Auto"/>
+                <Setter Property="BaselineOffset" Value="-1.5"/>
+            </Style>
+            
+            <!-- 다국어 적용 시 문자열 리소스-->
+            <Style x:Key="BaseTextBlockStyle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="FontWeight" Value="Normal"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="LineHeight" Value="20"/>
+                <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+                <Setter Property="TextOptions.TextFormattingMode" Value="Ideal"/>
+                <Setter Property="BaselineOffset" Value="-1.5"/>
+            </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

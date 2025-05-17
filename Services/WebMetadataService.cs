@@ -4,24 +4,25 @@ using System.IO; // Path 클래스 사용을 위해 추가
 using System.Net.Http;
 using System.Threading.Tasks;
 using DLGameViewer.Models;
+using DLGameViewer.Interfaces;
 using HtmlAgilityPack; // HtmlAgilityPack 사용
 using HtmlAgilityPack.CssSelectors.NetCore;
 
 namespace DLGameViewer.Services {
-    public class WebMetadataService {
+    public class WebMetadataService : IWebMetadataService {
         private readonly HttpClient _httpClient;
-        private readonly ImageService _imageService; // ImageService 추가
+        private readonly IImageService _imageService; // ImageService 인터페이스로 변경
 
-        public WebMetadataService(ImageService imageService) { // 생성자에서 ImageService 주입
+        public WebMetadataService(IImageService imageService) { // 생성자에서 IImageService 주입
             _httpClient = new HttpClient();
             // 웹사이트에서 차단되는 것을 방지하기 위해 사용자 에이전트 설정
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-            _imageService = imageService; // 주입받은 ImageService 할당
+            _imageService = imageService; // 주입받은 IImageService 할당
         }
 
-        public async Task<GameInfo?> FetchMetadataAsync(string identifier) {
+        public async Task<GameInfo> FetchMetadataAsync(string identifier) {
             if (string.IsNullOrWhiteSpace(identifier)) {
-                return null;
+                return new GameInfo { Identifier = identifier };
             }
 
             // dlsite.com URL 구성 (maniax 카테고리 기준, 한국어 로캘 추가)
@@ -30,7 +31,7 @@ namespace DLGameViewer.Services {
             try {
                 string htmlContent = await _httpClient.GetStringAsync(url);
                 if (string.IsNullOrWhiteSpace(htmlContent)) {
-                    return null;
+                    return new GameInfo { Identifier = identifier };
                 }
 
                 var htmlDoc = new HtmlDocument();
@@ -62,7 +63,7 @@ namespace DLGameViewer.Services {
                             throw new Exception($"이미지 URL로부터 파일이름을 추출하지 못했습니다 : {imageUrl}");
                         }
                         try{
-                            string? localImagePath = await _imageService.DownloadAndSaveImageAsync(imageUrl, identifier, fileName);
+                            string localImagePath = await _imageService.DownloadAndSaveImageAsync(imageUrl, identifier, fileName);
                             if (string.IsNullOrWhiteSpace(localImagePath)) {
                                 throw new Exception();
                             }
@@ -80,10 +81,10 @@ namespace DLGameViewer.Services {
                 return gameInfo;
             } catch (HttpRequestException ex) {
                 Console.WriteLine($"HTTP 요청 오류: {ex.Message}");
-                return null;
+                return new GameInfo { Identifier = identifier };
             } catch (Exception ex) {
                 Console.WriteLine($"예상치 못한 오류가 발생했습니다 : {identifier} : {ex.Message}");
-                return null;
+                return new GameInfo { Identifier = identifier };
             }
         }
         private string ParseTitle(HtmlDocument htmlDoc) {

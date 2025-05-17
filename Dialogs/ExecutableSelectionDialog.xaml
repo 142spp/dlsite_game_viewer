@@ -4,32 +4,45 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DLGameViewer.Dialogs"
+        xmlns:styles="clr-namespace:DLGameViewer.Styles"
+        xmlns:vm="clr-namespace:DLGameViewer.ViewModels"
         mc:Ignorable="d"
-        Title="실행 파일 선택" Height="300" Width="400"
+        Title="실행 파일 선택" Height="300" Width="500"
         WindowStartupLocation="CenterOwner"
-        Icon="/Resources/favicon.ico"
-        ShowInTaskbar="False"
-        ResizeMode="NoResize">
-    <Grid Margin="15">
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="NoResize"
+        Icon="{StaticResource DLIconImage}"
+        Style="{StaticResource CustomWindowStyle}"
+        styles:CustomWindowStyle.UseCustomTitleBar="True"
+        styles:CustomWindowStyle.WindowType="ExecutableSelectionDialog"
+        Foreground="{DynamicResource ForegroundBrush}">
+    <Grid Margin="15" Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="실행할 파일을 선택하세요" Margin="0,0,0,10"/>
+        <TextBlock Grid.Row="0" Text="실행할 파일을 선택하세요" Margin="0,0,0,10" Foreground="{DynamicResource ForegroundBrush}"/>
 
-        <ListBox Grid.Row="1" x:Name="ExecutableListBox" Margin="0,0,0,10" SelectionMode="Single" MouseDoubleClick="ExecutableListBox_MouseDoubleClick">
+        <ListBox Grid.Row="1" x:Name="ExecutableListBox" ItemsSource="{Binding ExecutableNames}" SelectedIndex="{Binding SelectedIndex}" Margin="0,0,0,10" SelectionMode="Single"
+                 Background="{DynamicResource CardBackgroundBrush}" 
+                 Foreground="{DynamicResource ForegroundBrush}" 
+                 BorderBrush="{DynamicResource BorderBrush}"
+                 MouseDoubleClick="ExecutableListBox_MouseDoubleClick">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding}" />
+                    <TextBlock Text="{Binding}" Foreground="{DynamicResource ForegroundBrush}"/>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="OkButton" Content="확인" Width="75" Height="30" IsDefault="True" Click="OkButton_Click" VerticalContentAlignment="Center"/>
-            <Button Content="취소" Width="75" Height="30" IsCancel="True" Margin="5,0,0,0" VerticalContentAlignment="Center"/>
+            <Button Content="확인" Width="75" Height="30" IsDefault="True" Command="{Binding OkCommand}" VerticalContentAlignment="Center"
+                   Style="{StaticResource DefaultButtonStyle}"/>
+            <Button Content="취소" Width="75" Height="30" IsCancel="True" Margin="5,0,0,0" Command="{Binding CancelCommand}" VerticalContentAlignment="Center"
+                   Style="{StaticResource DefaultButtonStyle}"/>
         </StackPanel>
     </Grid>
 </Window> 

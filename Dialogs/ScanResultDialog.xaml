@@ -1,0 +1,43 @@
+<Window x:Class="DLGameViewer.Dialogs.ScanResultDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DLGameViewer.Dialogs"
+        xmlns:styles="clr-namespace:DLGameViewer.Styles"
+        xmlns:vm="clr-namespace:DLGameViewer.ViewModels"
+        mc:Ignorable="d"
+        Title="스캔 결과" Height="500" Width="700" 
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        Icon="{StaticResource DLIconImage}"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Style="{StaticResource CustomWindowStyle}"
+        styles:CustomWindowStyle.UseCustomTitleBar="True"
+        styles:CustomWindowStyle.WindowType="ScanResultDialog">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- 상단 제목 -->
+        <TextBlock Grid.Row="0" Text="폴더 스캔 결과" FontSize="16" FontWeight="Bold" Margin="0,0,0,10" 
+                   Foreground="{DynamicResource ForegroundBrush}"/>
+        
+        <!-- 결과 표시 영역 -->
+        <TextBox Grid.Row="1" Text="{Binding ScanResultText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                 TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" 
+                 IsReadOnly="True" Background="{DynamicResource CardBackgroundBrush}" 
+                 Foreground="{DynamicResource ForegroundBrush}" 
+                 BorderBrush="{DynamicResource BorderBrush}"
+                 Padding="5" FontFamily="Consolas" />
+        
+        <!-- 하단 버튼 영역 -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="닫기" Width="80" Height="30" Command="{Binding CloseCommand}"
+                    Margin="5,0,0,0" IsCancel="True" Style="{StaticResource DefaultButtonStyle}"/>
+        </StackPanel>
+    </Grid>
+</Window> 

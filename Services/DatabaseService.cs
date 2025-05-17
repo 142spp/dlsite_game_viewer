@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using DLGameViewer.Models; // GameInfo 모델을 사용하기 위해 추가
+using DLGameViewer.Interfaces; // 인터페이스를 사용하기 위해 추가
 using System;
 using System.IO;
 using System.Collections.Generic; // List<GameInfo>를 위해 추가
@@ -14,7 +15,7 @@ enum DatabaseError {
 }
 
 namespace DLGameViewer.Services {
-    public class DatabaseService {
+    public class DatabaseService : IDatabaseService {
         private readonly string _databasePath;
 
         public DatabaseService() {
@@ -214,8 +215,8 @@ namespace DLGameViewer.Services {
             return games;
         }
 
-        public GameInfo? GetGameById(long id) {
-            GameInfo? game = null;
+        public GameInfo GetGameById(long id) {
+            GameInfo game = null;
 
             using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
                 connection.Open();
@@ -250,7 +251,8 @@ namespace DLGameViewer.Services {
                     }
                 }
             }
-            return game;
+            // null이 아닌 빈 객체 반환
+            return game ?? new GameInfo();
         }
 
         // JSON 문자열에서 문자열 리스트로 역직렬화하는 헬퍼 메서드
@@ -347,6 +349,56 @@ namespace DLGameViewer.Services {
 
                 return command.ExecuteNonQuery(); // 영향을 받은 행의 수를 반환
             }
+        }
+
+        // 검색 메서드 추가
+        public List<GameInfo> SearchGames(string searchText) {
+            var games = new List<GameInfo>();
+            
+            if (string.IsNullOrWhiteSpace(searchText))
+                return GetAllGames();
+                
+            string searchPattern = $"%{searchText}%";
+
+            using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
+                connection.Open();
+
+                var command = connection.CreateCommand();
+                command.CommandText =
+                @"
+                    SELECT Id, Identifier, Title, Creator, Genres, Rating, 
+                           CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, 
+                           ExecutableFiles, AdditionalMetadata
+                    FROM GameInfo
+                    WHERE Title LIKE $SearchPattern 
+                       OR Identifier LIKE $SearchPattern
+                       OR Creator LIKE $SearchPattern;
+                ";
+                
+                command.Parameters.AddWithValue("$SearchPattern", searchPattern);
+
+                using (var reader = command.ExecuteReader()) {
+                    while (reader.Read()) {
+                        var game = new GameInfo {
+                            Id = reader.GetInt64(0),
+                            Identifier = reader.GetString(1),
+                            Title = reader.GetString(2),
+                            Creator = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                            Genres = reader.IsDBNull(4) ? new List<string>() : DeserializeList(reader, 4),
+                            Rating = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                            CoverImageUrl = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                            CoverImagePath = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                            LocalImagePath = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                            FolderPath = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                            ExecutableFiles = reader.IsDBNull(10) ? new List<string>() : DeserializeList(reader, 10),
+                            AdditionalMetadata = reader.IsDBNull(11) ? string.Empty : reader.GetString(11)
+                        };
+                        games.Add(game);
+                    }
+                }
+            }
+
+            return games;
         }
     }
 } 

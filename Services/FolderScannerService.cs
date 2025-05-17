@@ -5,18 +5,19 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DLGameViewer.Models;
+using DLGameViewer.Interfaces;
 
 namespace DLGameViewer.Services
 {
-    public class FolderScannerService
+    public class FolderScannerService : IFolderScannerService
     {
         // RJ, VJ로 시작하고 그 뒤에 2자리 이상의 숫자가 오는 패턴 (예: RJ123456, VJ00)
         private static readonly Regex IdentifierRegex = new Regex(@"(RJ|VJ)[\s_]?\d{5,}", RegexOptions.IgnoreCase);
-        private readonly DatabaseService _databaseService;
-        private readonly WebMetadataService _webMetadataService;
+        private readonly IDatabaseService _databaseService;
+        private readonly IWebMetadataService _webMetadataService;
 
         // 생성자 추가: DatabaseService와 WebMetadataService를 주입받음
-        public FolderScannerService(DatabaseService databaseService, WebMetadataService webMetadataService){
+        public FolderScannerService(IDatabaseService databaseService, IWebMetadataService webMetadataService){
             _databaseService = databaseService;
             _webMetadataService = webMetadataService;
         }

@@ -1,5 +1,6 @@
 using DLGameViewer.Models;
 using DLGameViewer.Services; // DatabaseService와 DatabaseError를 위해 추가
+using DLGameViewer.Interfaces; // 인터페이스 사용을 위해 추가
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,9 +16,9 @@ namespace DLGameViewer.Helpers {
         public static async Task ProcessFolderScanAsync(
             string folderPath,
             List<GameInfo> scannedGamesOutput,
-            FolderScannerService folderScannerService,
-            WebMetadataService webMetadataService,
-            DatabaseService databaseService,
+            IFolderScannerService folderScannerService,
+            IWebMetadataService webMetadataService,
+            IDatabaseService databaseService,
             ProgressUpdateCallback progressCallback
         ) {
             // 스캔 시작 메시지
@@ -46,15 +47,15 @@ namespace DLGameViewer.Helpers {
                     }
 
                     // 웹 메타데이터 가져오기
-                    GameInfo? fetchedGameInfo = await webMetadataService.FetchMetadataAsync(game.Identifier);
-                    long addResult;
+                    GameInfo fetchedGameInfo = await webMetadataService.FetchMetadataAsync(game.Identifier);
 
-                    if (fetchedGameInfo != null) {
+                    // 반환된 GameInfo 객체가 새로운 객체라면 (null이 아니라면) FolderPath와 ExecutableFiles를 복사
+                    if (fetchedGameInfo != null && fetchedGameInfo.Identifier == game.Identifier) {
                         fetchedGameInfo.FolderPath = game.FolderPath;
                         fetchedGameInfo.ExecutableFiles = game.ExecutableFiles;
 
-                        addResult = databaseService.AddGame(fetchedGameInfo);
-                        if (addResult >= 0) { // 성공 (ID 반환)
+                        long addResult = databaseService.AddGame(fetchedGameInfo);
+                        if (addResult > 0) { // 성공 (ID 반환)
                             string successMessage = $"  -> '{fetchedGameInfo.Title}' ({game.Identifier}): 웹 메타데이터와 함께 데이터베이스에 추가됨 (ID: {addResult}).";
                             progressCallback(successMessage, fetchedGameInfo, addResult);
                         } else { 
@@ -62,11 +63,12 @@ namespace DLGameViewer.Helpers {
                             progressCallback(errorMessage, null, -1);
                         }
                     } else {
+                        // 웹에서 메타데이터를 가져오지 못했거나 식별자가 다른 경우, 로컬 정보만 사용
                         string noMetadataMessage = $"  -> {game.Identifier}: 웹에서 메타데이터를 가져오지 못했습니다. 로컬 정보({game.Title})만 사용합니다.";
                         progressCallback(noMetadataMessage, game, -1);
                         
-                        addResult = databaseService.AddGame(game);
-                        if (addResult >= 0) { // 성공 (ID 반환)
+                        long addResult = databaseService.AddGame(game);
+                        if (addResult > 0) { // 성공 (ID 반환)
                             string localSuccessMessage = $"  -> '{game.Title}' ({game.Identifier}): 로컬 정보만 데이터베이스에 추가됨 (ID: {addResult}).";
                             progressCallback(localSuccessMessage, game, addResult);
                         } else {

@@ -5,12 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DLGameViewer.Dialogs"
         xmlns:conv="clr-namespace:DLGameViewer.Utils" 
+        xmlns:styles="clr-namespace:DLGameViewer.Styles"
+        xmlns:vm="clr-namespace:DLGameViewer.ViewModels"
         mc:Ignorable="d"
         Title="게임 정보" Height="800" Width="1200"
-        Icon="/Resources/favicon.ico"
+        Icon="{StaticResource DLIconImage}"
         WindowStartupLocation="CenterOwner"
         ShowInTaskbar="False"
-        ResizeMode="CanResizeWithGrip">
+        ResizeMode="CanResizeWithGrip"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Style="{StaticResource CustomWindowStyle}"
+        styles:CustomWindowStyle.UseCustomTitleBar="True"
+        styles:CustomWindowStyle.WindowType="GameInfoDialog">
     <Window.Resources>
         <conv:PathToImageSourceConverter x:Key="PathToImageSourceConverterInstance"/>
     </Window.Resources>
@@ -20,89 +27,133 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" MaxWidth="560"/>
-                    <ColumnDefinition Width="Auto" MinWidth="220" MaxWidth="580"/>
-                </Grid.ColumnDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="1.2*" />
+            </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Margin="0,0,20,0">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <Label Content="식별자:" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="IdentifierTextBlock" Margin="5,0,0,0" VerticalAlignment="Center" />
+            <!-- 왼쪽 정보 패널 -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Style="{StaticResource DefaultScrollViewerStyle}">
+                <StackPanel Margin="0,0,20,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                        <Label Content="식별자:" VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}"/>
+                        <TextBlock Text="{Binding Identifier}" FontWeight="Bold" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}" />
+                        <Button Content="복사" FontSize="16" Width="Auto" MinWidth="10" Height="Auto" MinHeight="10" Margin="10,0,0,0" Padding="5,0,5,0" Command="{Binding CopyIdentifierCommand}" VerticalContentAlignment="Center"
+                               Style="{StaticResource DefaultButtonStyle}"/>
+                        <TextBlock Text="{Binding ClipboardMessage}" FontStyle="Italic" Margin="10,0,0,0" VerticalAlignment="Center" Foreground="#FFD1D1D1">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ClipboardMessage, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
 
-                    <Label Content="제목:" Margin="0,10,0,0"/>
-                    <TextBox x:Name="TitleTextBox" Margin="5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" MaxHeight="100"/>
+                    <Label Content="제목:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                    <TextBox Text="{Binding Title}" Margin="5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" MaxHeight="100"
+                             Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
 
-                    <Label Content="제작자/서클:" Margin="0,10,0,0"/>
-                    <TextBox x:Name="CreatorTextBox" Margin="5" Padding="5"/>
+                    <Label Content="제작자/서클:" Margin="0,10,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                    <TextBox Text="{Binding Creator}" Margin="5" Padding="5" 
+                             Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
 
-                    <Label Content="장르 (쉼표로 구분):" Margin="0,10,0,0"/>
-                    <TextBox x:Name="GenresTextBox" Margin="5" Padding="5" AcceptsReturn="True" TextWrapping="Wrap"/>
+                    <Label Content="장르 (쉼표로 구분):" Margin="0,10,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                    <TextBox Text="{Binding Genres}" Margin="5" Padding="5" AcceptsReturn="True" TextWrapping="Wrap"
+                             Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
 
                     <StackPanel Orientation="Horizontal" Margin="0,5,5,0">
-                        <Label Content="평점:" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                        <TextBox x:Name="RatingTextBox" FontSize="16" Width="50" Height="35" Padding="5" TextAlignment="Right" VerticalContentAlignment="Center" IsReadOnly="True"/>
+                        <Label Content="평점:" Margin="0,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}"/>
+                        <TextBox Text="{Binding Rating}" FontSize="16" Width="Auto" MinWidth="50" Height="35" Padding="5" TextAlignment="Right" VerticalContentAlignment="Center" IsReadOnly="True"
+                                 Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5,0,0,0">
-                            <Button x:Name="RatingUpButton" FontSize="10" Content="▲" Width="30" Height="18" Margin="0,0,0,1" Click="RatingUpButton_Click" ToolTip="평점 올리기" VerticalContentAlignment="Center"/>
-                            <Button x:Name="RatingDownButton" FontSize="10" Content="▼" Width="30" Height="18" Margin="0,1,0,0" Click="RatingDownButton_Click"  ToolTip="평점 내리기" VerticalContentAlignment="Center"/>
+                            <Button FontSize="10" Content="▲" Width="Auto" MinWidth="30" Height="Auto" Margin="0,0,0,1" Command="{Binding RatingUpCommand}" ToolTip="평점 올리기" VerticalContentAlignment="Center"
+                                   Style="{StaticResource DefaultButtonStyle}"/>
+                            <Button FontSize="10" Content="▼" Width="Auto" MinWidth="30" Height="Auto" Margin="0,1,0,0" Command="{Binding RatingDownCommand}" ToolTip="평점 내리기" VerticalContentAlignment="Center"
+                                   Style="{StaticResource DefaultButtonStyle}"/>
                         </StackPanel>
                     </StackPanel>
 
-                    <Expander Header="세부 메타데이터 (펼치기/접기)" Margin="0,15,0,0">
+                    <Expander Header="세부 메타데이터 (펼치기/접기)" Margin="0,15,0,0" Foreground="{DynamicResource ForegroundBrush}">
                         <StackPanel Margin="5">
-                            <Label Content="커버 이미지 URL:"/>
-                            <TextBox x:Name="CoverImageUrlTextBox" Margin="5,0,5,5" Padding="5" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="80"/>
+                            <Label Content="커버 이미지 URL:" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding CoverImageUrl}" Margin="5,0,5,5" Padding="5" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="80"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
 
-                            <Label Content="로컬 이미지 폴더:" Margin="0,5,0,0"/>
-                            <TextBox x:Name="LocalImagePathTextBox" Margin="5,0,5,5" Padding="5" IsReadOnly="True"/>
+                            <Label Content="로컬 이미지 폴더:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding LocalImagePath}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
 
-                            <Label Content="원본 폴더 경로:" Margin="0,5,0,0"/>
-                            <TextBox x:Name="FolderPathTextBox" Margin="5,0,5,5" Padding="5" IsReadOnly="True"/>
+                            <Label Content="원본 폴더 경로:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding FolderPath}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
 
-                            <Label Content="실행 파일 목록 (읽기 전용):" Margin="0,5,0,0"/>
-                            <TextBox x:Name="ExecutableFilesTextBox" Margin="5,0,5,5" Padding="5" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="100"/>
+                            <Label Content="실행 파일 목록 (읽기 전용):" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding ExecutableFiles}" Margin="5,0,5,5" Padding="5" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="100"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
                         </StackPanel>
                     </Expander>
 
-                    <Label Content="추가 설명:" Margin="0,15,0,0"/>
-                    <TextBox x:Name="AdditionalMetadataTextBox" Margin="5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Height="150"/>
+                    <Label Content="추가 설명:" Margin="0,15,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                    <TextBox Text="{Binding AdditionalMetadata}" Margin="5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Height="Auto" MinHeight="150"
+                             Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
                 </StackPanel>
+            </ScrollViewer>
 
-                <Grid Grid.Column="1" Margin="10,0,0,0" Height="600" MaxHeight="600" MaxWidth="560" VerticalAlignment="Top">
+            <!-- 오른쪽 이미지 패널 -->
+            <Grid Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="4*" />
+                    <RowDefinition Height="1*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 메인 이미지 -->
+                <Grid Grid.Row="0" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="20*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Image Grid.Column="1"
+                           Source="{Binding DisplayedFullImagePath, Converter={StaticResource PathToImageSourceConverterInstance}, ConverterParameter='MainImageContent', FallbackValue={x:Null}, TargetNullValue={x:Null}}"
+                           Stretch="Uniform" />
+                    <TextBlock Text="이미지 없음" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" Foreground="{DynamicResource PlaceholderBrush}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DisplayedFullImagePath}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding DisplayedFullImagePath}" Value="">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+
+                <!-- 미리보기 이미지 -->
+                <Grid Grid.Row="1">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" MaxHeight="420"/>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto" MaxHeight="120"/>
+                        <RowDefinition Height="40*"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-
-                    <Border Grid.Row="0" BorderBrush="LightGray" BorderThickness="1" VerticalAlignment="Top" HorizontalAlignment="Center" >
-                        <Grid>
-                            <Image x:Name="MainCoverImage" 
-                                   Source="{Binding DisplayedFullImagePath, Converter={StaticResource PathToImageSourceConverterInstance}, ConverterParameter='MainImageContent', FallbackValue={x:Null}, TargetNullValue={x:Null}}"
-                                   Stretch="Uniform" MinWidth="400" MinHeight="300" MaxWidth="560" MaxHeight="420"/>
-                            <TextBlock Text="이미지 없음" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" Foreground="DarkGray">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding DisplayedFullImagePath}" Value="{x:Null}">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding DisplayedFullImagePath}" Value="">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Grid>
-                    </Border>
-
-                    <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" >
-                        <ItemsControl x:Name="PreviewImagesItemsControl" ItemsSource="{Binding PreviewImageFilePaths}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="40*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <ScrollViewer Grid.Row="1" Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0"
+                                 Style="{StaticResource DefaultScrollViewerStyle}">
+                        <ItemsControl ItemsSource="{Binding PreviewImageFilePaths}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel Orientation="Horizontal"/>
@@ -110,10 +161,16 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border BorderBrush="Gray" BorderThickness="1" Margin="2,0,2,0" Cursor="Hand">
+                                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="2,0,2,0" Cursor="Hand" Height="Auto">
                                         <Image Source="{Binding Converter={StaticResource PathToImageSourceConverterInstance}, ConverterParameter='PreviewImageContent'}" 
-                                               Width="100" Height="100" Stretch="Uniform"
-                                               MouseUp="PreviewImage_MouseUp"/>
+                                               Width="Auto" Height="Auto" Stretch="Uniform">
+                                            <Image.InputBindings>
+                                                <MouseBinding MouseAction="LeftClick" 
+                                                              Command="{Binding DataContext.SelectImageCommand, 
+                                                                        RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" 
+                                                              CommandParameter="{Binding}"/>
+                                            </Image.InputBindings>
+                                        </Image>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -121,11 +178,13 @@
                     </ScrollViewer>
                 </Grid>
             </Grid>
-        </ScrollViewer>
+        </Grid>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-            <Button x:Name="SaveButton" Content="저장" Width="75" Height="30" IsDefault="True" Click="SaveButton_Click" VerticalContentAlignment="Center"/>
-            <Button Content="취소" Width="75" Height="30" IsCancel="True" Margin="5,0,0,0" VerticalContentAlignment="Center"/>
+            <Button Content="저장" Width="Auto" MinWidth="75" Height="Auto" MinHeight="30" IsDefault="True" Command="{Binding SaveCommand}" VerticalContentAlignment="Center"
+                   Style="{StaticResource DefaultButtonStyle}"/>
+            <Button Content="취소" Width="Auto" MinWidth="75" Height="Auto" MinHeight="30" IsCancel="True" Command="{Binding CancelCommand}" Margin="5,0,0,0" VerticalContentAlignment="Center"
+                   Style="{StaticResource DefaultButtonStyle}"/>
         </StackPanel>
     </Grid>
 </Window> 
