@@ -115,9 +115,9 @@
                             </TextBox.Style>
                         </TextBox>
                         
-                        <Button Grid.Column="1" Command="{Binding ClearSearchCommand}" 
-                                Width="30" Height="30" Margin="5,0,0,0" 
-                                Content="✕" FontWeight="Bold"
+                        <Button Grid.Column="2" Command="{Binding ClearSearchCommand}" 
+                                Width="Auto" Height="30" Margin="5,0,0,0" 
+                                Content="검색"
                                 VerticalAlignment="Center" 
                                 Style="{StaticResource DefaultButtonStyle}"/>
                     </Grid>
@@ -131,21 +131,17 @@
                                       SelectedValue="{Binding SortField, Mode=TwoWay}"
                                       SelectedValuePath="Tag"
                                       VerticalAlignment="Center" 
-                                      Background="{DynamicResource CardBackgroundBrush}"
-                                      Foreground="{DynamicResource ForegroundBrush}"
-                                      BorderBrush="{DynamicResource BorderBrush}">
-                                <ComboBoxItem Content="제목" Tag="Title"/>
-                                <ComboBoxItem Content="식별자" Tag="Identifier"/>
-                                <ComboBoxItem Content="제작자" Tag="Creator"/>
-                                <ComboBoxItem Content="평점" Tag="Rating"/>
+                                      Style="{StaticResource DefaultComboBoxStyle}">
+                                <ComboBoxItem Content="제목" Tag="Title" Style="{StaticResource DefaultComboBoxItemStyle}"/>
+                                <ComboBoxItem Content="식별자" Tag="Identifier" Style="{StaticResource DefaultComboBoxItemStyle}"/>
+                                <ComboBoxItem Content="제작자" Tag="Creator" Style="{StaticResource DefaultComboBoxItemStyle}"/>
+                                <ComboBoxItem Content="평점" Tag="Rating" Style="{StaticResource DefaultComboBoxItemStyle}"/>
                             </ComboBox>
                             <ToggleButton Width="80" Height="30" Margin="5,0,0,0" 
                                           IsChecked="{Binding IsAscending}"
                                           VerticalAlignment="Center"
                                           Content="{Binding IsAscending, Converter={StaticResource BooleanToTextConverter}, ConverterParameter='오름차순:내림차순'}"
-                                          Background="{DynamicResource ButtonBackgroundBrush}"
-                                          Foreground="{DynamicResource ForegroundBrush}"
-                                          BorderBrush="{DynamicResource BorderBrush}"/>
+                                          Style="{StaticResource DefaultToggleButtonStyle}"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -162,16 +158,27 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Style="{StaticResource CardBorderStyle}" Margin="10" Padding="5,0,5,10" Height="320">
+                            <DataTemplate DataType="{x:Type models:GameInfo}">
+                                <Border x:Name="ItemBorder" Style="{StaticResource CardBorderStyle}" Margin="10" Padding="5,0,5,10" Height="320"
+                                        Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}">
                                     <Border.ContextMenu>
                                         <ContextMenu>
-                                            <MenuItem Header="게임 실행" Command="{Binding DataContext.RunGameCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" CommandParameter="{Binding}" Style="{StaticResource MenuItemStyle}"/>
-                                            <MenuItem Header="게임 정보 보기" Command="{Binding DataContext.GameInfoCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" CommandParameter="{Binding}" Style="{StaticResource MenuItemStyle}"/>
-                                            <Separator/>
-                                            <MenuItem Header="폴더 열기" Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" CommandParameter="{Binding}" Style="{StaticResource MenuItemStyle}"/>
-                                            <Separator/>
-                                            <MenuItem Header="데이터베이스에서 삭제" Command="{Binding DataContext.DeleteGameCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" CommandParameter="{Binding}" Style="{StaticResource WarningMenuItemStyle}"/>
+                                            <MenuItem Header="게임 실행" 
+                                                      Command="{Binding PlacementTarget.Tag.RunGameCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      Style="{StaticResource MenuItemStyle}"/>
+                                            <MenuItem Header="게임 정보 보기" 
+                                                      Command="{Binding PlacementTarget.Tag.GameInfoCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      Style="{StaticResource MenuItemStyle}"/>
+                                            <MenuItem Header="폴더 열기" 
+                                                      Command="{Binding PlacementTarget.Tag.OpenFolderCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      Style="{StaticResource MenuItemStyle}"/>
+                                            <MenuItem Header="데이터베이스에서 삭제" 
+                                                      Command="{Binding PlacementTarget.Tag.DeleteGameCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      Style="{StaticResource WarningMenuItemStyle}"/>
                                         </ContextMenu>
                                     </Border.ContextMenu>
                                     
@@ -211,8 +218,8 @@
                                         </StackPanel>
                                         
                                         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button Content="실행" Width="60" Height="30" Margin="0,0,10,0" Command="{Binding DataContext.RunGameCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" CommandParameter="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource DefaultButtonStyle}"/>
-                                            <Button Content="게임 정보" Width="100" Height="30" Command="{Binding DataContext.GameInfoCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}" CommandParameter="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource DefaultButtonStyle}"/>
+                                            <Button Content="실행" Width="60" Height="30" Margin="0,0,10,0" Command="{Binding DataContext.RunGameCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" CommandParameter="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource DefaultButtonStyle}"/>
+                                            <Button Content="게임 정보" Width="100" Height="30" Command="{Binding DataContext.GameInfoCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" CommandParameter="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource DefaultButtonStyle}"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
