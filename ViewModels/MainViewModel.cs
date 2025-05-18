@@ -381,6 +381,7 @@ namespace DLGameViewer.ViewModels {
                         StatusMessage = "데이터베이스 초기화 중...";
 
                         // 데이터베이스 초기화 실행
+                        _databaseService.ResetDatabase(); // 디버그용
                         int deletedRows = _databaseService.ClearAllGames();
 
                         // UI 갱신
@@ -483,59 +484,69 @@ namespace DLGameViewer.ViewModels {
 
         // 현재 설정된 필드와 방향으로 정렬 적용
         private void ApplySorting() {
+            if (Games == null || !Games.Any()) return;
+
+            IOrderedEnumerable<GameInfo> sortedGames;
+
             try {
-                if (Games == null || Games.Count == 0) return;
-
-                StatusMessage = $"{SortField} 기준으로 {(IsAscending ? "오름차순" : "내림차순")} 정렬 중...";
-
-                List<GameInfo> sortedList;
-
-                // 선택된 필드에 따라 정렬
                 switch (SortField) {
                     case "Title":
-                        sortedList = IsAscending
-                            ? Games.OrderBy(g => g.Title).ToList()
-                            : Games.OrderByDescending(g => g.Title).ToList();
+                        sortedGames = IsAscending ? Games.OrderBy(g => g.Title, StringComparer.CurrentCultureIgnoreCase) 
+                                                  : Games.OrderByDescending(g => g.Title, StringComparer.CurrentCultureIgnoreCase);
                         break;
                     case "Identifier":
-                        sortedList = IsAscending
-                            ? Games.OrderBy(g => g.Identifier).ToList()
-                            : Games.OrderByDescending(g => g.Identifier).ToList();
+                        sortedGames = IsAscending ? Games.OrderBy(g => g.Identifier) : Games.OrderByDescending(g => g.Identifier);
                         break;
                     case "Creator":
-                        sortedList = IsAscending
-                            ? Games.OrderBy(g => g.Creator).ToList()
-                            : Games.OrderByDescending(g => g.Creator).ToList();
+                        sortedGames = IsAscending ? Games.OrderBy(g => g.Creator, StringComparer.CurrentCultureIgnoreCase) 
+                                                  : Games.OrderByDescending(g => g.Creator, StringComparer.CurrentCultureIgnoreCase);
                         break;
-                    case "Rating":
-                        // 숫자로 변환 가능한 경우 숫자로 정렬, 아닌 경우 문자열로 정렬
-                        sortedList = IsAscending
-                            ? Games.OrderBy(g => {
-                                if (double.TryParse(g.Rating, out double rating)) return rating;
-                                return 0;
-                            }).ToList()
-                            : Games.OrderByDescending(g => {
-                                if (double.TryParse(g.Rating, out double rating)) return rating;
-                                return 0;
-                            }).ToList();
+                    case "Rating": // Rating은 문자열이므로, 숫자처럼 비교하려면 변환 필요. 현재는 문자열 비교.
+                        sortedGames = IsAscending ? Games.OrderBy(g => g.Rating) : Games.OrderByDescending(g => g.Rating);
+                        break;
+                    case "DateAdded":
+                        sortedGames = IsAscending ? Games.OrderBy(g => g.DateAdded) : Games.OrderByDescending(g => g.DateAdded);
+                        break;
+                    case "LastPlayed":
+                        sortedGames = IsAscending 
+                            ? Games.OrderBy(g => g.LastPlayed.HasValue).ThenBy(g => g.LastPlayed ?? DateTime.MinValue) 
+                            : Games.OrderByDescending(g => g.LastPlayed.HasValue).ThenByDescending(g => g.LastPlayed ?? DateTime.MaxValue);
+                        break;
+                    case "ReleaseDate":
+                        sortedGames = IsAscending 
+                            ? Games.OrderBy(g => g.ReleaseDate.HasValue).ThenBy(g => g.ReleaseDate ?? DateTime.MinValue) 
+                            : Games.OrderByDescending(g => g.ReleaseDate.HasValue).ThenByDescending(g => g.ReleaseDate ?? DateTime.MaxValue);
+                        break;
+                    case "Genres":
+                        sortedGames = IsAscending 
+                            ? Games.OrderBy(g => !g.Genres.Any()).ThenBy(g => g.Genres.FirstOrDefault()) 
+                            : Games.OrderByDescending(g => g.Genres.Any()).ThenByDescending(g => g.Genres.FirstOrDefault());
+                        break;
+                    case "FileSize":
+                        sortedGames = IsAscending ? Games.OrderBy(g => g.FileSize) : Games.OrderByDescending(g => g.FileSize);
+                        break;
+                    case "PlayTime":
+                        sortedGames = IsAscending ? Games.OrderBy(g => g.PlayTime) : Games.OrderByDescending(g => g.PlayTime);
                         break;
                     default:
-                        sortedList = IsAscending
-                            ? Games.OrderBy(g => g.Title).ToList()
-                            : Games.OrderByDescending(g => g.Title).ToList();
+                        // 기본 정렬 또는 오류 처리
+                        sortedGames = Games.OrderBy(g => g.Title, StringComparer.CurrentCultureIgnoreCase);
+                        StatusMessage = $"알 수 없는 정렬 필드: {SortField}. 제목으로 정렬합니다.";
                         break;
                 }
+                Games = new ObservableCollection<GameInfo>(sortedGames);
+                // GamesView.Refresh(); // CollectionViewSource를 사용하는 경우 필요할 수 있음
+                // CollectionViewSource를 사용하지 않고 직접 ObservableCollection을 교체했으므로, 
+                // 바인딩된 컨트롤은 자동으로 업데이트됨. 만약 업데이트 안되면 NotifyPropertyChanged("Games") 필요.
+                OnPropertyChanged(nameof(Games)); // ObservableCollection 자체를 교체했으므로 알림
 
-                // ObservableCollection 갱신
-                Games.Clear();
-                foreach (var game in sortedList) {
-                    Games.Add(game);
-                }
-
-                StatusMessage = $"{Games.Count}개 게임을 {SortField} 기준으로 {(IsAscending ? "오름차순" : "내림차순")} 정렬 완료";
             } catch (Exception ex) {
-                StatusMessage = $"정렬 적용 중 오류: {ex.Message}";
-                MessageBox.Show($"정렬 적용 중 오류가 발생했습니다: {ex.Message}", "정렬 오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                StatusMessage = $"게임 정렬 중 오류 발생: {ex.Message}";
+                 MessageBox.Show($"게임 정렬 중 오류가 발생했습니다: {ex.Message}", "정렬 오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                // 오류 발생 시 기본 정렬 (예: 제목 오름차순)
+                var defaultSorted = Games.OrderBy(g => g.Title, StringComparer.CurrentCultureIgnoreCase);
+                Games = new ObservableCollection<GameInfo>(defaultSorted);
+                OnPropertyChanged(nameof(Games));
             }
         }
     }

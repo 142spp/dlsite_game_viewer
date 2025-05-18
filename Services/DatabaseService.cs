@@ -59,14 +59,23 @@ namespace DLGameViewer.Services {
                         Identifier TEXT UNIQUE NOT NULL,
                         Title TEXT NOT NULL,
                         Creator TEXT,
+                        GameType TEXT,
                         Genres TEXT, -- Comma-separated values
+                        SalesCount INTEGER,
                         Rating TEXT,
+                        RatingCount INTEGER,
                         CoverImageUrl TEXT,
                         CoverImagePath TEXT,
                         LocalImagePath TEXT,
                         FolderPath TEXT UNIQUE NOT NULL,
                         ExecutableFiles TEXT, -- Comma-separated values
-                        AdditionalMetadata TEXT
+                        SaveFolderPath TEXT,
+                        DateAdded TEXT,
+                        LastPlayed TEXT,
+                        ReleaseDate TEXT,
+                        FileSize TEXT,
+                        PlayTime TEXT,
+                        UserMemo TEXT
                     );
                 ";
                 command.ExecuteNonQuery();
@@ -96,14 +105,23 @@ namespace DLGameViewer.Services {
                                 Identifier TEXT UNIQUE NOT NULL,
                                 Title TEXT NOT NULL,
                                 Creator TEXT,
+                                GameType TEXT,
                                 Genres TEXT,
+                                SalesCount INTEGER,
                                 Rating TEXT,
+                                RatingCount INTEGER,
                                 CoverImageUrl TEXT,
                                 CoverImagePath TEXT,
                                 LocalImagePath TEXT,
                                 FolderPath TEXT UNIQUE NOT NULL,
+                                SaveFolderPath TEXT,
                                 ExecutableFiles TEXT,
-                                AdditionalMetadata TEXT
+                                DateAdded TEXT,
+                                LastPlayed TEXT,
+                                ReleaseDate TEXT,
+                                FileSize TEXT,
+                                PlayTime TEXT,
+                                UserMemo TEXT
                             );
                         ";
                         command.ExecuteNonQuery();
@@ -144,8 +162,14 @@ namespace DLGameViewer.Services {
                 var command = connection.CreateCommand();
                 command.CommandText =
                 @"
-                    INSERT INTO GameInfo (Identifier, Title, Creator, Genres, Rating, CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, ExecutableFiles, AdditionalMetadata)
-                    VALUES ($Identifier, $Title, $Creator, $Genres, $Rating, $CoverImageUrl, $CoverImagePath, $LocalImagePath, $FolderPath, $ExecutableFiles, $AdditionalMetadata);
+                    INSERT INTO GameInfo (Identifier, Title, Creator, GameType, Genres, SalesCount, Rating, RatingCount, 
+                                        CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, SaveFolderPath, ExecutableFiles, 
+                                        DateAdded, LastPlayed, ReleaseDate, FileSize, PlayTime, 
+                                        UserMemo)
+                    VALUES ($Identifier, $Title, $Creator, $GameType, $Genres, $SalesCount, $Rating, $RatingCount, 
+                            $CoverImageUrl, $CoverImagePath, $LocalImagePath, $FolderPath, $SaveFolderPath, $ExecutableFiles, 
+                            $DateAdded, $LastPlayed, $ReleaseDate, $FileSize, $PlayTime, 
+                            $UserMemo);
                     
                     SELECT last_insert_rowid(); // 삽입된 행의 ID를 반환
                 ";
@@ -153,14 +177,24 @@ namespace DLGameViewer.Services {
                 command.Parameters.AddWithValue("$Identifier", game.Identifier);
                 command.Parameters.AddWithValue("$Title", game.Title);
                 command.Parameters.AddWithValue("$Creator", game.Creator ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$GameType", game.GameType ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$Genres", game.Genres.Any() ? JsonSerializer.Serialize(game.Genres) : (object)DBNull.Value);
+                command.Parameters.AddWithValue("$SalesCount", game.SalesCount == 0 ? (object)DBNull.Value : game.SalesCount);
                 command.Parameters.AddWithValue("$Rating", game.Rating ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$RatingCount", game.RatingCount == 0 ? (object)DBNull.Value : game.RatingCount);
                 command.Parameters.AddWithValue("$CoverImageUrl", game.CoverImageUrl ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$CoverImagePath", game.CoverImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$LocalImagePath", game.LocalImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$FolderPath", game.FolderPath ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$SaveFolderPath", game.SaveFolderPath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$ExecutableFiles", game.ExecutableFiles.Any() ? JsonSerializer.Serialize(game.ExecutableFiles) : (object)DBNull.Value);
-                command.Parameters.AddWithValue("$AdditionalMetadata", game.AdditionalMetadata ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$DateAdded", game.DateAdded == DateTime.MinValue ? (object)DBNull.Value : game.DateAdded.ToString("o"));
+                command.Parameters.AddWithValue("$LastPlayed", game.LastPlayed.HasValue ? game.LastPlayed.Value.ToString("o") : (object)DBNull.Value);
+                command.Parameters.AddWithValue("$ReleaseDate", game.ReleaseDate.HasValue ? game.ReleaseDate.Value.ToString("o") : (object)DBNull.Value);
+                command.Parameters.AddWithValue("$FileSize", game.FileSize ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$PlayTime", game.PlayTime == TimeSpan.Zero ? (object)DBNull.Value : game.PlayTime.ToString());
+
+                command.Parameters.AddWithValue("$UserMemo", game.UserMemo ?? (object)DBNull.Value);
 
                 // ExecuteScalar는 INSERT 후 last_insert_rowid() 값을 반환
                 try {
@@ -186,9 +220,10 @@ namespace DLGameViewer.Services {
                 var command = connection.CreateCommand();
                 command.CommandText =
                 @"
-                    SELECT Id, Identifier, Title, Creator, Genres, Rating, 
-                           CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, 
-                           ExecutableFiles, AdditionalMetadata
+                    SELECT Id, Identifier, Title, Creator, GameType, Genres, SalesCount, Rating, RatingCount, 
+                           CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, SaveFolderPath, ExecutableFiles,  
+                           DateAdded, LastPlayed, ReleaseDate, FileSize, PlayTime, 
+                           UserMemo
                     FROM GameInfo;
                 ";
 
@@ -199,14 +234,23 @@ namespace DLGameViewer.Services {
                             Identifier = reader.GetString(1),
                             Title = reader.GetString(2),
                             Creator = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                            Genres = DeserializeList(reader, 4),
-                            Rating = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                            CoverImageUrl = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                            CoverImagePath = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
-                            LocalImagePath = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
-                            FolderPath = reader.GetString(9),
-                            ExecutableFiles = DeserializeList(reader, 10),
-                            AdditionalMetadata = reader.IsDBNull(11) ? string.Empty : reader.GetString(11)
+                            GameType = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                            Genres = DeserializeList(reader, 5),
+                            SalesCount = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
+                            Rating = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                            RatingCount = reader.IsDBNull(8) ? 0 : reader.GetInt32(8),
+                            CoverImageUrl = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                            CoverImagePath = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
+                            LocalImagePath = reader.IsDBNull(11) ? string.Empty : reader.GetString(11),
+                            FolderPath = reader.GetString(12),
+                            SaveFolderPath = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
+                            ExecutableFiles = DeserializeList(reader, 14),
+                            DateAdded = reader.IsDBNull(15) ? DateTime.MinValue : DateTime.Parse(reader.GetString(15)),
+                            LastPlayed = reader.IsDBNull(16) ? (DateTime?)null : DateTime.Parse(reader.GetString(16)),
+                            ReleaseDate = reader.IsDBNull(17) ? (DateTime?)null : DateTime.Parse(reader.GetString(17)),
+                            FileSize = reader.IsDBNull(18) ? string.Empty : reader.GetString(18),
+                            PlayTime = reader.IsDBNull(19) ? TimeSpan.Zero : TimeSpan.Parse(reader.GetString(19)),
+                            UserMemo = reader.IsDBNull(20) ? string.Empty : reader.GetString(20)
                         };
                         games.Add(game);
                     }
@@ -224,9 +268,10 @@ namespace DLGameViewer.Services {
                 var command = connection.CreateCommand();
                 command.CommandText =
                 @"
-                    SELECT Id, Identifier, Title, Creator, Genres, Rating, 
-                           CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, 
-                           ExecutableFiles, AdditionalMetadata
+                    SELECT Id, Identifier, Title, Creator, GameType, Genres, SalesCount, Rating, RatingCount, 
+                           CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, SaveFolderPath, ExecutableFiles,  
+                           DateAdded, LastPlayed, ReleaseDate, FileSize, PlayTime, 
+                           UserMemo
                     FROM GameInfo
                     WHERE Id = $Id;
                 ";
@@ -239,20 +284,28 @@ namespace DLGameViewer.Services {
                             Identifier = reader.GetString(1),
                             Title = reader.GetString(2),
                             Creator = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                            Genres = DeserializeList(reader, 4),
-                            Rating = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                            CoverImageUrl = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                            CoverImagePath = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
-                            LocalImagePath = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
-                            FolderPath = reader.GetString(9),
-                            ExecutableFiles = DeserializeList(reader, 10),
-                            AdditionalMetadata = reader.IsDBNull(11) ? string.Empty : reader.GetString(11)
+                            GameType = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                            Genres = DeserializeList(reader, 5),
+                            SalesCount = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
+                            Rating = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                            RatingCount = reader.IsDBNull(8) ? 0 : reader.GetInt32(8),
+                            CoverImageUrl = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                            CoverImagePath = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
+                            LocalImagePath = reader.IsDBNull(11) ? string.Empty : reader.GetString(11),
+                            FolderPath = reader.GetString(12),
+                            SaveFolderPath = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
+                            ExecutableFiles = DeserializeList(reader, 14),
+                            DateAdded = reader.IsDBNull(15) ? DateTime.MinValue : DateTime.Parse(reader.GetString(15)),
+                            LastPlayed = reader.IsDBNull(16) ? (DateTime?)null : DateTime.Parse(reader.GetString(16)),
+                            ReleaseDate = reader.IsDBNull(17) ? (DateTime?)null : DateTime.Parse(reader.GetString(17)),
+                            FileSize = reader.IsDBNull(18) ? string.Empty : reader.GetString(18),
+                            PlayTime = reader.IsDBNull(19) ? TimeSpan.Zero : TimeSpan.Parse(reader.GetString(19)),
+                            UserMemo = reader.IsDBNull(20) ? string.Empty : reader.GetString(20)
                         };
                     }
                 }
             }
-            // null이 아닌 빈 객체 반환
-            return game ?? new GameInfo();
+            return game;
         }
 
         // JSON 문자열에서 문자열 리스트로 역직렬화하는 헬퍼 메서드
@@ -302,35 +355,51 @@ namespace DLGameViewer.Services {
                 var command = connection.CreateCommand();
                 command.CommandText =
                 @"
-                    UPDATE GameInfo
-                    SET Identifier = $Identifier,
-                        Title = $Title,
-                        Creator = $Creator,
-                        Genres = $Genres,
-                        Rating = $Rating,
-                        CoverImageUrl = $CoverImageUrl,
-                        CoverImagePath = $CoverImagePath,
-                        LocalImagePath = $LocalImagePath,
-                        FolderPath = $FolderPath,
-                        ExecutableFiles = $ExecutableFiles,
-                        AdditionalMetadata = $AdditionalMetadata
+                    UPDATE GameInfo SET 
+                        Identifier = $Identifier, 
+                        Title = $Title, 
+                        Creator = $Creator, 
+                        GameType = $GameType, 
+                        Genres = $Genres, 
+                        SalesCount = $SalesCount, 
+                        Rating = $Rating, 
+                        RatingCount = $RatingCount, 
+                        CoverImageUrl = $CoverImageUrl, 
+                        CoverImagePath = $CoverImagePath, 
+                        LocalImagePath = $LocalImagePath, 
+                        FolderPath = $FolderPath, 
+                        ExecutableFiles = $ExecutableFiles, 
+                        DateAdded = $DateAdded, 
+                        LastPlayed = $LastPlayed, 
+                        ReleaseDate = $ReleaseDate, 
+                        FileSize = $FileSize, 
+                        PlayTime = $PlayTime, 
+                        UserMemo = $UserMemo
                     WHERE Id = $Id;
                 ";
 
+                command.Parameters.AddWithValue("$Id", game.Id);
                 command.Parameters.AddWithValue("$Identifier", game.Identifier);
                 command.Parameters.AddWithValue("$Title", game.Title);
                 command.Parameters.AddWithValue("$Creator", game.Creator ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$GameType", game.GameType ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$Genres", game.Genres.Any() ? JsonSerializer.Serialize(game.Genres) : (object)DBNull.Value);
+                command.Parameters.AddWithValue("$SalesCount", game.SalesCount == 0 ? (object)DBNull.Value : game.SalesCount);
                 command.Parameters.AddWithValue("$Rating", game.Rating ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$RatingCount", game.RatingCount == 0 ? (object)DBNull.Value : game.RatingCount);
                 command.Parameters.AddWithValue("$CoverImageUrl", game.CoverImageUrl ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$CoverImagePath", game.CoverImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$LocalImagePath", game.LocalImagePath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$FolderPath", game.FolderPath ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$ExecutableFiles", game.ExecutableFiles.Any() ? JsonSerializer.Serialize(game.ExecutableFiles) : (object)DBNull.Value);
-                command.Parameters.AddWithValue("$AdditionalMetadata", game.AdditionalMetadata ?? (object)DBNull.Value);
-                command.Parameters.AddWithValue("$Id", game.Id);
+                command.Parameters.AddWithValue("$DateAdded", game.DateAdded == DateTime.MinValue ? (object)DBNull.Value : game.DateAdded.ToString("o"));
+                command.Parameters.AddWithValue("$LastPlayed", game.LastPlayed.HasValue ? game.LastPlayed.Value.ToString("o") : (object)DBNull.Value);
+                command.Parameters.AddWithValue("$ReleaseDate", game.ReleaseDate.HasValue ? game.ReleaseDate.Value.ToString("o") : (object)DBNull.Value);
+                command.Parameters.AddWithValue("$FileSize", game.FileSize ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$PlayTime", game.PlayTime == TimeSpan.Zero ? (object)DBNull.Value : game.PlayTime.ToString());
+                command.Parameters.AddWithValue("$UserMemo", game.UserMemo ?? (object)DBNull.Value);
 
-                return command.ExecuteNonQuery(); // 영향을 받은 행의 수를 반환
+                return command.ExecuteNonQuery(); // 영향을 받은 행의 수 반환
             }
         }
 
@@ -354,28 +423,31 @@ namespace DLGameViewer.Services {
         // 검색 메서드 추가
         public List<GameInfo> SearchGames(string searchText) {
             var games = new List<GameInfo>();
-            
-            if (string.IsNullOrWhiteSpace(searchText))
-                return GetAllGames();
-                
-            string searchPattern = $"%{searchText}%";
+            if (string.IsNullOrWhiteSpace(searchText)) {
+                return GetAllGames(); // 검색어가 없으면 모든 게임 반환
+            }
 
             using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
                 connection.Open();
 
                 var command = connection.CreateCommand();
+                // Title, Identifier, Creator, Genres 필드에서 검색 (LIKE 사용)
+                // Genres는 JSON 문자열이므로, 실제로는 파싱 후 검색하거나, 별도 테이블/FTS 사용 고려 필요
+                // 여기서는 간단히 문자열 포함 여부로 검색
                 command.CommandText =
                 @"
-                    SELECT Id, Identifier, Title, Creator, Genres, Rating, 
-                           CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, 
-                           ExecutableFiles, AdditionalMetadata
+                    SELECT Id, Identifier, Title, Creator, GameType, Genres, SalesCount, Rating, RatingCount, 
+                           CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, SaveFolderPath, ExecutableFiles,  
+                           DateAdded, LastPlayed, ReleaseDate, FileSize, PlayTime, 
+                           UserMemo
                     FROM GameInfo
-                    WHERE Title LIKE $SearchPattern 
-                       OR Identifier LIKE $SearchPattern
-                       OR Creator LIKE $SearchPattern;
+                    WHERE Title LIKE $searchText OR 
+                          Identifier LIKE $searchText OR 
+                          Creator LIKE $searchText OR
+                          GameType LIKE $searchText OR
+                          Genres LIKE $searchText; -- 주의: Genres는 JSON 배열 문자열, 정확한 검색 어려움
                 ";
-                
-                command.Parameters.AddWithValue("$SearchPattern", searchPattern);
+                command.Parameters.AddWithValue("$searchText", $"%{searchText}%");
 
                 using (var reader = command.ExecuteReader()) {
                     while (reader.Read()) {
@@ -384,20 +456,28 @@ namespace DLGameViewer.Services {
                             Identifier = reader.GetString(1),
                             Title = reader.GetString(2),
                             Creator = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                            Genres = reader.IsDBNull(4) ? new List<string>() : DeserializeList(reader, 4),
-                            Rating = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
-                            CoverImageUrl = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                            CoverImagePath = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
-                            LocalImagePath = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
-                            FolderPath = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
-                            ExecutableFiles = reader.IsDBNull(10) ? new List<string>() : DeserializeList(reader, 10),
-                            AdditionalMetadata = reader.IsDBNull(11) ? string.Empty : reader.GetString(11)
+                            GameType = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                            Genres = DeserializeList(reader, 5),
+                            SalesCount = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
+                            Rating = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                            RatingCount = reader.IsDBNull(8) ? 0 : reader.GetInt32(8),
+                            CoverImageUrl = reader.IsDBNull(9) ? string.Empty : reader.GetString(9),
+                            CoverImagePath = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
+                            LocalImagePath = reader.IsDBNull(11) ? string.Empty : reader.GetString(11),
+                            FolderPath = reader.GetString(12),
+                            ExecutableFiles = DeserializeList(reader, 13),
+                            SaveFolderPath = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
+                            DateAdded = reader.IsDBNull(15) ? DateTime.MinValue : DateTime.Parse(reader.GetString(15)),
+                            LastPlayed = reader.IsDBNull(16) ? (DateTime?)null : DateTime.Parse(reader.GetString(16)),
+                            ReleaseDate = reader.IsDBNull(17) ? (DateTime?)null : DateTime.Parse(reader.GetString(17)),
+                            FileSize = reader.IsDBNull(18) ? string.Empty : reader.GetString(18),
+                            PlayTime = reader.IsDBNull(19) ? TimeSpan.Zero : TimeSpan.Parse(reader.GetString(19)),
+                            UserMemo = reader.IsDBNull(20) ? string.Empty : reader.GetString(20)
                         };
                         games.Add(game);
                     }
                 }
             }
-
             return games;
         }
     }

@@ -52,6 +52,8 @@ namespace DLGameViewer.Services
                 };
                 // 실행 파일 검색 (최적화된 방식)
                 await FindExecutableFilesAsync(currentPath, gameInfo);
+                // 세이브 폴더 검색
+                await GetSaveFolderPathAsync(currentPath, gameInfo);
                 // 게임 정보를 찾았으면 리스트에 추가
                 foundGames.Add(gameInfo);
                 // 식별자를 찾았으므로 이 폴더의 하위 폴더는 더 이상 조사하지 않음
@@ -89,6 +91,22 @@ namespace DLGameViewer.Services
             );
             
             gameInfo.ExecutableFiles.AddRange(allExecutables);
+        }
+
+        private async Task GetSaveFolderPathAsync(string folderPath, GameInfo gameInfo) {
+            // 쯔꾸르 기본 세이브 폴더 경로
+            var defaultSaveFolderPath = Path.Combine(folderPath, "www\\save");
+            if (Directory.Exists(defaultSaveFolderPath)) {
+                gameInfo.SaveFolderPath = defaultSaveFolderPath;
+                return;
+            }
+            // 쯔꾸르 기본 세이브 폴더 경로가 없다면 게임 폴더 경로에서 세이브 폴더 경로 찾기
+            var saveFolderPath = await Task.Run(() =>
+                Directory.GetDirectories(folderPath, "*", SearchOption.AllDirectories)
+                    .Where(dir => Path.GetFileName(dir).Equals("save", StringComparison.OrdinalIgnoreCase))
+                    .FirstOrDefault()
+            );
+            gameInfo.SaveFolderPath = saveFolderPath ?? string.Empty;
         }
     }
 } 

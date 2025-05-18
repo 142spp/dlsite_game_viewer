@@ -17,11 +17,26 @@ namespace DLGameViewer.Models
         // 제작자 또는 서클
         public string Creator { get; set; }
 
+        // 게임 타입 
+        public string GameType { get; set; }
+
         // 장르 목록
         public List<string> Genres { get; set; } = new List<string>();
 
+        // 판매수
+        public int SalesCount { get; set; }
+
         // 평점 (문자열로 저장하여 다양한 형식 수용)
         public string Rating { get; set; }
+
+        // 평가수
+        public int RatingCount { get; set; }
+
+        // 게임의 공식 발매일
+        public DateTime? ReleaseDate { get; set; }
+
+        // 게임 폴더 또는 주요 파일의 크기 (바이트 단위)
+        public string FileSize { get; set; }
 
         // 웹에서 가져온 커버 이미지 URL
         public string CoverImageUrl { get; set; } // 대표 커버 이미지 하나만 우선 저장
@@ -35,11 +50,23 @@ namespace DLGameViewer.Models
         // 원본 콘텐츠 폴더 경로
         public string FolderPath { get; set; }
 
+        // 세이브 폴더 경로
+        public string SaveFolderPath { get; set; }
+
         // 폴더 내 실행 파일 목록 (전체 경로)
         public List<string> ExecutableFiles { get; set; } = new List<string>();
 
+        // 게임이 데이터베이스에 추가된 날짜
+        public DateTime DateAdded { get; set; }
+
+        // 게임을 마지막으로 플레이한 날짜
+        public DateTime? LastPlayed { get; set; }
+
+        // 총 플레이 시간
+        public TimeSpan PlayTime { get; set; }
+
         // 기타 메타데이터 (예: 설명, 태그 등을 JSON 문자열 형태로 저장 가능)
-        public string AdditionalMetadata { get; set; }
+        public string UserMemo { get; set; }
         
         public GameInfo()
         {
@@ -47,12 +74,14 @@ namespace DLGameViewer.Models
             Identifier = string.Empty;
             Title = string.Empty;
             Creator = string.Empty;
+            GameType = string.Empty;
             Rating = string.Empty;
+            FileSize = string.Empty;
             CoverImageUrl = string.Empty;
             CoverImagePath = string.Empty;
             LocalImagePath = string.Empty;
             FolderPath = string.Empty;
-            AdditionalMetadata = string.Empty;
+            UserMemo = string.Empty;
         }
     }
 } 

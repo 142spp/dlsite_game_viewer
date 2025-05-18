@@ -100,7 +100,7 @@
                     </Expander>
 
                     <Label Content="추가 설명:" Margin="0,15,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
-                    <TextBox Text="{Binding AdditionalMetadata}" Margin="5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Height="Auto" MinHeight="150"
+                    <TextBox Text="{Binding UserMemo}" Margin="5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Height="Auto" MinHeight="150"
                              Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
                 </StackPanel>
             </ScrollViewer>

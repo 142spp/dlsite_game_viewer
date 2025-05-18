@@ -23,7 +23,7 @@ namespace DLGameViewer.ViewModels
         private string _localImagePath;
         private string _folderPath;
         private string _executableFiles;
-        private string _additionalMetadata;
+        private string _userMemo;
         private string _displayedFullImagePath;
         private int _selectedPreviewIndex = -1;
         private string _clipboardMessage;
@@ -87,10 +87,10 @@ namespace DLGameViewer.ViewModels
             set => SetProperty(ref _executableFiles, value);
         }
 
-        public string AdditionalMetadata
+        public string UserMemo
         {
-            get => _additionalMetadata;
-            set => SetProperty(ref _additionalMetadata, value);
+            get => _userMemo;
+            set => SetProperty(ref _userMemo, value);
         }
 
         public string DisplayedFullImagePath
@@ -175,7 +175,7 @@ namespace DLGameViewer.ViewModels
             LocalImagePath = _game.LocalImagePath;
             FolderPath = _game.FolderPath;
             ExecutableFiles = string.Join("\n", _game.ExecutableFiles ?? new List<string>());
-            AdditionalMetadata = _game.AdditionalMetadata;
+            UserMemo = _game.UserMemo;
             
             // 현재 표시할 이미지 설정
             DisplayedFullImagePath = _game.CoverImagePath;
@@ -216,7 +216,7 @@ namespace DLGameViewer.ViewModels
             _game.Rating = Rating;
             _game.CoverImageUrl = CoverImageUrl;
             // CoverImagePath, LocalImagePath는 여기서 변경하지 않음
-            _game.AdditionalMetadata = AdditionalMetadata;
+            _game.UserMemo = UserMemo;
             
             RequestClose?.Invoke(this, true);
         }

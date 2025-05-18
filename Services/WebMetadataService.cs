@@ -7,11 +7,43 @@ using DLGameViewer.Models;
 using DLGameViewer.Interfaces;
 using HtmlAgilityPack; // HtmlAgilityPack 사용
 using HtmlAgilityPack.CssSelectors.NetCore;
+using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using System.Globalization;
+using System.Net;
+
 
 namespace DLGameViewer.Services {
+    internal class ProductApiDetails {
+        [JsonPropertyName("maker_id")]
+        public string? MakerId { get; set; }
+
+        [JsonPropertyName("dl_count")]
+        public int DlCount { get; set; }
+
+        [JsonPropertyName("wishlist_count")]
+        public int WishlistCount { get; set; }
+
+        [JsonPropertyName("rate_average_2dp")]
+        public double RateAverage2dp { get; set; }
+
+        [JsonPropertyName("rate_count")]
+        public int RateCount { get; set; }
+
+        [JsonPropertyName("price")]
+        public int Price { get; set; }
+
+        [JsonPropertyName("regist_date")]
+        public string? RegistDate { get; set; }
+
+    }
+
     public class WebMetadataService : IWebMetadataService {
         private readonly HttpClient _httpClient;
         private readonly IImageService _imageService; // ImageService 인터페이스로 변경
+        private const string _dlsiteApiUrl = "https://www.dlsite.com/maniax/product/info/ajax?product_id={0}";
+        private const string _dlsiteHtmlUrl = "https://www.dlsite.com/maniax/work/=/product_id/{0}.html/?locale=ko_KR";
 
         public WebMetadataService(IImageService imageService) { // 생성자에서 IImageService 주입
             _httpClient = new HttpClient();
@@ -20,31 +52,65 @@ namespace DLGameViewer.Services {
             _imageService = imageService; // 주입받은 IImageService 할당
         }
 
+
         public async Task<GameInfo> FetchMetadataAsync(string identifier) {
             if (string.IsNullOrWhiteSpace(identifier)) {
                 return new GameInfo { Identifier = identifier };
             }
 
             // dlsite.com URL 구성 (maniax 카테고리 기준, 한국어 로캘 추가)
-            string url = $"https://www.dlsite.com/maniax/work/=/product_id/{identifier}.html/?locale=ko_KR";
+            string apiUrl = string.Format(_dlsiteApiUrl, identifier);
+            string htmlUrl = string.Format(_dlsiteHtmlUrl, identifier);
+            GameInfo gameInfo = new GameInfo { Identifier = identifier };
 
+            // API 호출 시도
             try {
-                string htmlContent = await _httpClient.GetStringAsync(url);
+                string apiContent = await _httpClient.GetStringAsync(apiUrl);
+                if (string.IsNullOrWhiteSpace(apiContent)) {
+                    return gameInfo;
+                }
+
+                var apiResponse = JsonSerializer.Deserialize<Dictionary<string, ProductApiDetails>>(apiContent);
+                if (apiResponse != null && apiResponse.TryGetValue(identifier, out ProductApiDetails productDetails)) {
+                    gameInfo.SalesCount = productDetails.DlCount; 
+                    gameInfo.Rating = productDetails.RateAverage2dp.ToString("F2", CultureInfo.InvariantCulture);
+                    gameInfo.RatingCount = productDetails.RateCount;
+                    
+                    if (!string.IsNullOrWhiteSpace(productDetails.RegistDate)) {
+                        if (DateTime.TryParseExact(productDetails.RegistDate, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime releaseDate)) {
+                            gameInfo.ReleaseDate = DateTime.SpecifyKind(releaseDate, DateTimeKind.Utc);
+                        }
+                    }
+                } else{
+                    throw new Exception("API에서 제품 정보 찾을 수 없음");
+                }
+            } catch (HttpRequestException ex) {
+                Console.WriteLine($"HTTP 요청 오류: {ex.Message}");
+                return gameInfo;
+            } catch (JsonException ex) {
+                Console.WriteLine($"JSON 파싱 오류: {ex.Message}");
+                return gameInfo;
+            } catch (Exception ex) {
+                Console.WriteLine($"예상치 못한 오류가 발생했습니다 : {identifier} : {ex.Message}");
+                return gameInfo;
+            }
+
+            // HTML 호출 시도
+            try {
+                string htmlContent = await _httpClient.GetStringAsync(htmlUrl);
                 if (string.IsNullOrWhiteSpace(htmlContent)) {
-                    return new GameInfo { Identifier = identifier };
+                    return gameInfo;
                 }
 
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlContent);
 
-                GameInfo gameInfo = new GameInfo {
-                    Identifier = identifier,
-                    Title = ParseTitle(htmlDoc),
-                    Creator = ParseCreator(htmlDoc),
-                    Rating = ParseRating(htmlDoc),
-                    Genres = ParseGenres(htmlDoc),
-                    AdditionalMetadata = ParseDescription(htmlDoc)
-                };
+                // 파싱 시도
+                gameInfo.Title = ParseTitle(htmlDoc);
+                gameInfo.Creator = ParseCreator(htmlDoc);
+                gameInfo.GameType = ParseGameType(htmlDoc);
+                gameInfo.Genres = ParseGenres(htmlDoc);
+                gameInfo.FileSize = ParseFileSize(htmlDoc);
 
                 List<string> imageUrls = ParseImageUrls(htmlDoc);
                 if (imageUrls.Count > 0) {
@@ -99,11 +165,23 @@ namespace DLGameViewer.Services {
             return creatorText ?? string.Empty;
         }
 
+        private string ParseGameType(HtmlDocument htmlDoc) {
+            var gameTypeNode = htmlDoc.DocumentNode.SelectSingleNode("//table[@id='work_outline']//div[@id='category_type']/a/span[1]");
+            var gameTypeText = HtmlEntity.DeEntitize(gameTypeNode?.InnerText.Trim() ?? string.Empty);
+            return gameTypeText ?? string.Empty;
+        }
 
-        private string ParseRating(HtmlDocument htmlDoc) {
-            var ratingNode = htmlDoc.DocumentNode.SelectSingleNode("//div[@class='work_right_info_item']//span[@class='point average_count']");
-            var ratingText = HtmlEntity.DeEntitize(ratingNode?.InnerText.Trim() ?? string.Empty);
-            return ratingText ?? string.Empty;
+        private string ParseFileSize(HtmlDocument htmlDoc) {
+            var fileSizeNode = htmlDoc.DocumentNode.SelectSingleNode("//table[@id='work_outline']//th[normalize-space(.)='파일 용량']/following-sibling::td");
+            var fileSizeText = HtmlEntity.DeEntitize(fileSizeNode?.InnerText.Trim() ?? string.Empty);
+            // 파일 크기 문자열에서 숫자와 단위만 추출
+            if (!string.IsNullOrWhiteSpace(fileSizeText)) {
+                var match = Regex.Match(fileSizeText, @"(\d+(?:\.\d+)?)\s*([KMG]B)", RegexOptions.IgnoreCase);
+                if (match.Success) {
+                    fileSizeText = $"{match.Groups[1].Value} {match.Groups[2].Value.ToUpper()}";
+                }
+            }
+            return fileSizeText ?? string.Empty;
         }
 
         private List<string> ParseGenres(HtmlDocument htmlDoc) {

@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading; // SemaphoreSlim 사용을 위해 추가
 
 namespace DLGameViewer.Helpers {
     public static class ScanProcessHelper {
@@ -27,56 +28,79 @@ namespace DLGameViewer.Helpers {
             
             // 폴더 스캔 시작
             var localScannedGames = await folderScannerService.ScanDirectoryAsync(folderPath);
-            scannedGamesOutput.AddRange(localScannedGames);
+            // scannedGamesOutput은 이 메서드 내에서 직접 사용되지 않고, 호출 측에서 결과를 받기 위함이므로
+            // localScannedGames를 기반으로 작업 후, 최종적으로 업데이트된 게임 정보를 scannedGamesOutput에 반영할 수 있습니다.
+            // 여기서는 일단 localScannedGames를 직접 사용합니다.
 
             if (localScannedGames.Any()) {
-                // 폴더 스캔 결과 콜백 호출
                 string scanResultMessage = $"{localScannedGames.Count}개의 게임 폴더 발견, 정보 처리 중...";
                 progressCallback(scanResultMessage, null, -1);
 
+                var tasks = new List<Task>();
+                // 동시 작업 수를 5개로 제한 (DLsite 요청 부하 고려)
+                var semaphore = new SemaphoreSlim(5); 
+
                 foreach (var game in localScannedGames) {
-                    // 폴더 발견 시 중간 업데이트
-                    string statusMessage = $"게임 폴더 발견: {Path.GetFileName(game.FolderPath)}, 식별자: {game.Identifier}, 실행파일 수: {game.ExecutableFiles.Count}";
-                    progressCallback(statusMessage, game, -1);
+                    tasks.Add(Task.Run(async () => {
+                        await semaphore.WaitAsync();
+                        try {
+                            string initialStatusMessage = $"게임 폴더 정보 처리 시작: {Path.GetFileName(game.FolderPath)}, 식별자: {game.Identifier}";
+                            progressCallback(initialStatusMessage, game, -1);
 
-                    // 중복 식별자 확인 - IsGameExists 함수 사용
-                    if (databaseService.IsGameExists(game.Identifier)) {
-                        string duplicateMessage = $"  -> {game.Identifier}: 이미 데이터베이스에 존재합니다. 건너뜀.";
-                        progressCallback(duplicateMessage, game, -1);
-                        continue; // 이미 존재하면 다음 게임으로 넘어감
-                    }
+                            if (databaseService.IsGameExists(game.Identifier)) {
+                                string duplicateMessage = $"  -> {game.Identifier}: 이미 데이터베이스에 존재합니다. 건너뜀.";
+                                progressCallback(duplicateMessage, game, -1);
+                                return;
+                            }
 
-                    // 웹 메타데이터 가져오기
-                    GameInfo fetchedGameInfo = await webMetadataService.FetchMetadataAsync(game.Identifier);
+                            GameInfo fetchedGameInfo = await webMetadataService.FetchMetadataAsync(game.Identifier);
 
-                    // 반환된 GameInfo 객체가 새로운 객체라면 (null이 아니라면) FolderPath와 ExecutableFiles를 복사
-                    if (fetchedGameInfo != null && fetchedGameInfo.Identifier == game.Identifier) {
-                        fetchedGameInfo.FolderPath = game.FolderPath;
-                        fetchedGameInfo.ExecutableFiles = game.ExecutableFiles;
+                            if (fetchedGameInfo != null && fetchedGameInfo.Identifier == game.Identifier) {
+                                fetchedGameInfo.FolderPath = game.FolderPath;
+                                fetchedGameInfo.ExecutableFiles = game.ExecutableFiles;
+                                fetchedGameInfo.SaveFolderPath = game.SaveFolderPath;
+                                fetchedGameInfo.DateAdded = DateTime.Now;
 
-                        long addResult = databaseService.AddGame(fetchedGameInfo);
-                        if (addResult > 0) { // 성공 (ID 반환)
-                            string successMessage = $"  -> '{fetchedGameInfo.Title}' ({game.Identifier}): 웹 메타데이터와 함께 데이터베이스에 추가됨 (ID: {addResult}).";
-                            progressCallback(successMessage, fetchedGameInfo, addResult);
-                        } else { 
-                            string errorMessage = $"  -> {game.Identifier}: 데이터베이스 추가 중 오류 발생 (코드: {addResult}).";
-                            progressCallback(errorMessage, null, -1);
+                                long addResult = databaseService.AddGame(fetchedGameInfo);
+                                if (addResult > 0) {
+                                    string successMessage = $"  -> '{fetchedGameInfo.Title}' ({game.Identifier}): 웹 메타데이터와 함께 데이터베이스에 추가됨 (ID: {addResult}).";
+                                    progressCallback(successMessage, fetchedGameInfo, addResult);
+                                    // 성공적으로 추가된 게임을 scannedGamesOutput에 추가 (동기화 문제 고려 필요 시 Lock 사용)
+                                    lock (scannedGamesOutput) {
+                                       scannedGamesOutput.Add(fetchedGameInfo);
+                                    }
+                                } else {
+                                    string errorMessage = $"  -> {game.Identifier}: 데이터베이스 추가 중 오류 발생 (코드: {addResult}).";
+                                    progressCallback(errorMessage, null, -1);
+                                }
+                            } else {
+                                string noMetadataMessage = $"  -> {game.Identifier}: 웹에서 메타데이터를 가져오지 못했습니다. 로컬 정보({game.Title})만 사용합니다.";
+                                progressCallback(noMetadataMessage, game, -1);
+                                
+                                game.DateAdded = DateTime.Now; // 로컬 정보에도 추가 날짜 설정
+                                long addResult = databaseService.AddGame(game);
+                                if (addResult > 0) {
+                                    string localSuccessMessage = $"  -> '{game.Title}' ({game.Identifier}): 로컬 정보만 데이터베이스에 추가됨 (ID: {addResult}).";
+                                    progressCallback(localSuccessMessage, game, addResult);
+                                    lock (scannedGamesOutput) {
+                                        scannedGamesOutput.Add(game);
+                                    }
+                                } else {
+                                    string localErrorMessage = $"  -> {game.Identifier}: 데이터베이스 추가 중 오류 발생 (코드: {addResult}).";
+                                    progressCallback(localErrorMessage, null, -1);
+                                }
+                            }
+                        } catch (Exception ex) {
+                            // 개별 작업 실패 시 로깅 및 콜백
+                            string taskErrorMessage = $"  -> {game.Identifier}: 처리 중 예외 발생: {ex.Message}";
+                            progressCallback(taskErrorMessage, game, -1);
+                        } finally {
+                            semaphore.Release();
                         }
-                    } else {
-                        // 웹에서 메타데이터를 가져오지 못했거나 식별자가 다른 경우, 로컬 정보만 사용
-                        string noMetadataMessage = $"  -> {game.Identifier}: 웹에서 메타데이터를 가져오지 못했습니다. 로컬 정보({game.Title})만 사용합니다.";
-                        progressCallback(noMetadataMessage, game, -1);
-                        
-                        long addResult = databaseService.AddGame(game);
-                        if (addResult > 0) { // 성공 (ID 반환)
-                            string localSuccessMessage = $"  -> '{game.Title}' ({game.Identifier}): 로컬 정보만 데이터베이스에 추가됨 (ID: {addResult}).";
-                            progressCallback(localSuccessMessage, game, addResult);
-                        } else {
-                            string localErrorMessage = $"  -> {game.Identifier}: 데이터베이스 추가 중 오류 발생 (코드: {addResult}).";
-                            progressCallback(localErrorMessage, null, -1);
-                        }
-                    }
+                    }));
                 }
+                await Task.WhenAll(tasks);
+
             } else {
                 string noGamesMessage = "지정된 폴더에서 인식 가능한 게임 정보를 찾지 못했습니다.";
                 progressCallback(noGamesMessage, null, -1);
