@@ -65,29 +65,21 @@
             <Border Grid.Row="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Margin="0" Padding="10,10,10,10" Background="{DynamicResource CardBackgroundBrush}">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/> <!-- 버튼 그룹 -->
                         <ColumnDefinition Width="*"/>    <!-- 검색 영역 -->
                         <ColumnDefinition Width="Auto"/> <!-- 정렬 컨트롤 영역 -->
                     </Grid.ColumnDefinitions>
                     
-                    <!-- 버튼 그룹 -->
-                    <StackPanel Orientation="Horizontal" Margin="0" Grid.Column="0">
-                        <Button x:Name="btnScanFolder" Content="폴더 스캔" Width="100" Height="30" Command="{Binding ScanFolderCommand}" VerticalAlignment="Center" Margin="0,0,5,0" Style="{StaticResource DefaultButtonStyle}"/>
-                        <Button x:Name="btnRefreshGameList" Content="새로고침" Width="100" Height="30" Command="{Binding RefreshGameListCommand}" VerticalAlignment="Center" Margin="0,0,5,0" Style="{StaticResource DefaultButtonStyle}"/>
-                        <Button x:Name="btnClearDatabase" Content="초기화" Width="100" Height="30" Command="{Binding ClearDatabaseCommand}" VerticalAlignment="Center" Style="{StaticResource WarningButtonStyle}"/>
-                        <Button x:Name="btnToggleTheme" Content="테마 전환" Width="100" Height="30" Command="{Binding ToggleThemeCommand}" VerticalAlignment="Center" Margin="5,0,5,0" Style="{StaticResource DefaultButtonStyle}"/>
-                    </StackPanel>
-                    
                     <!-- 검색 영역 -->
-                    <Grid Grid.Column="1" Margin="10,0,10,0">
+                    <Grid Grid.Column="0" Margin="10,0,10,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="2*"/>
                         </Grid.ColumnDefinitions>
                         
                         <TextBox Grid.Column="0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
                                  Height="30" VerticalAlignment="Center" 
-                                 Padding="5" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                                 Padding="0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
                                  Background="{DynamicResource TextBoxBackgroundBrush}"
                                  Foreground="{DynamicResource ForegroundBrush}"
                                  VerticalContentAlignment="Center">
@@ -115,7 +107,7 @@
                             </TextBox.Style>
                         </TextBox>
                         
-                        <Button Grid.Column="2" Command="{Binding ClearSearchCommand}" 
+                        <Button Grid.Column="1" Command="{Binding ClearSearchCommand}" 
                                 Width="Auto" Height="30" Margin="5,0,0,0" 
                                 Content="검색"
                                 VerticalAlignment="Center" 
@@ -123,7 +115,7 @@
                     </Grid>
                     
                     <!-- 정렬 컨트롤 영역 -->
-                    <Grid Grid.Column="2">
+                    <Grid Grid.Column="1">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="정렬:" Foreground="{DynamicResource ForegroundBrush}" 
                                        VerticalAlignment="Center" Margin="0,0,5,0"/>

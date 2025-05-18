@@ -28,9 +28,6 @@ namespace DLGameViewer.Helpers {
             
             // 폴더 스캔 시작
             var localScannedGames = await folderScannerService.ScanDirectoryAsync(folderPath);
-            // scannedGamesOutput은 이 메서드 내에서 직접 사용되지 않고, 호출 측에서 결과를 받기 위함이므로
-            // localScannedGames를 기반으로 작업 후, 최종적으로 업데이트된 게임 정보를 scannedGamesOutput에 반영할 수 있습니다.
-            // 여기서는 일단 localScannedGames를 직접 사용합니다.
 
             if (localScannedGames.Any()) {
                 string scanResultMessage = $"{localScannedGames.Count}개의 게임 폴더 발견, 정보 처리 중...";

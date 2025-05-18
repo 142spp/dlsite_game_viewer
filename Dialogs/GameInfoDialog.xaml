@@ -63,24 +63,53 @@
                     <TextBox Text="{Binding Creator}" Margin="5" Padding="5" 
                              Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
 
+                    <Label Content="게임 종류:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                    <TextBox Text="{Binding GameType}" Margin="5,0,5,5" Padding="5"
+                             Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+
                     <Label Content="장르 (쉼표로 구분):" Margin="0,10,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
                     <TextBox Text="{Binding Genres}" Margin="5" Padding="5" AcceptsReturn="True" TextWrapping="Wrap"
                              Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
 
                     <StackPanel Orientation="Horizontal" Margin="0,5,5,0">
                         <Label Content="평점:" Margin="0,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}"/>
-                        <TextBox Text="{Binding Rating}" FontSize="16" Width="Auto" MinWidth="50" Height="35" Padding="5" TextAlignment="Right" VerticalContentAlignment="Center" IsReadOnly="True"
+                        <TextBox Text="{Binding Rating, StringFormat={}{0:F2}}" FontSize="16" Width="Auto" MinWidth="50" Height="35" Padding="5" TextAlignment="Right" VerticalContentAlignment="Center"
                                  Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5,0,0,0">
-                            <Button FontSize="10" Content="▲" Width="Auto" MinWidth="30" Height="Auto" Margin="0,0,0,1" Command="{Binding RatingUpCommand}" ToolTip="평점 올리기" VerticalContentAlignment="Center"
+                            <Button FontSize="7" Content="▲" Width="Auto" MinWidth="30" Height="20" Margin="0,0,0,1" Command="{Binding RatingUpCommand}" ToolTip="평점 올리기" VerticalContentAlignment="Center"
                                    Style="{StaticResource DefaultButtonStyle}"/>
-                            <Button FontSize="10" Content="▼" Width="Auto" MinWidth="30" Height="Auto" Margin="0,1,0,0" Command="{Binding RatingDownCommand}" ToolTip="평점 내리기" VerticalContentAlignment="Center"
+                            <Button FontSize="7" Content="▼" Width="Auto" MinWidth="30" Height="20" Margin="0,1,0,0" Command="{Binding RatingDownCommand}" ToolTip="평점 내리기" VerticalContentAlignment="Center"
                                    Style="{StaticResource DefaultButtonStyle}"/>
                         </StackPanel>
                     </StackPanel>
 
-                    <Expander Header="세부 메타데이터 (펼치기/접기)" Margin="0,15,0,0" Foreground="{DynamicResource ForegroundBrush}">
+                    <Expander Header="상세정보 (펼치기/접기)" Margin="0,15,0,0" Foreground="{DynamicResource ForegroundBrush}">
                         <StackPanel Margin="5">
+                            
+                            <Label Content="발매일:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding ReleaseDate}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+
+                            <Label Content="판매 수:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding SalesCount}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+
+                            <Label Content="평가 수:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding RatingCountDisplay}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+
+                            <Label Content="파일 크기:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding FileSize}" Margin="5,0,5,5" Padding="5"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+
+                            <Label Content="원본 폴더 경로:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding FolderPath}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+
+                            <Label Content="세이브 폴더 경로:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding SaveFolderPath}" Margin="5,0,5,5" Padding="5" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="80"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+
                             <Label Content="커버 이미지 URL:" Foreground="{DynamicResource ForegroundBrush}"/>
                             <TextBox Text="{Binding CoverImageUrl}" Margin="5,0,5,5" Padding="5" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="80"
                                      Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
@@ -89,17 +118,26 @@
                             <TextBox Text="{Binding LocalImagePath}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
                                      Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
 
-                            <Label Content="원본 폴더 경로:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
-                            <TextBox Text="{Binding FolderPath}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
-                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
-
-                            <Label Content="실행 파일 목록 (읽기 전용):" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <Label Content="실행 파일 목록:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
                             <TextBox Text="{Binding ExecutableFiles}" Margin="5,0,5,5" Padding="5" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="100"
                                      Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+                            
+                            <Label Content="추가된 날짜:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding DateAdded}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+
+                            <Label Content="마지막 플레이:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding LastPlayed}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+
+                            <Label Content="플레이 시간:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                            <TextBox Text="{Binding PlayTime}" Margin="5,0,5,5" Padding="5" IsReadOnly="True"
+                                     Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+
                         </StackPanel>
                     </Expander>
 
-                    <Label Content="추가 설명:" Margin="0,15,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                    <Label Content="사용자 메모:" Margin="0,15,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
                     <TextBox Text="{Binding UserMemo}" Margin="5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Height="Auto" MinHeight="150"
                              Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
                 </StackPanel>

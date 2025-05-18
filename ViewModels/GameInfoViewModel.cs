@@ -29,6 +29,17 @@ namespace DLGameViewer.ViewModels
         private string _clipboardMessage;
         private DispatcherTimer _messageTimer;
 
+        // 추가된 메타데이터 필드
+        private string _gameType;
+        private string _releaseDate;
+        private string _salesCount;
+        private string _ratingCountDisplay; // RatingCount는 이미 GameInfo에 int로 있으므로, 표시용 문자열 속성
+        private string _fileSize;
+        private string _saveFolderPath;
+        private string _dateAdded;
+        private string _lastPlayed;
+        private string _playTime;
+
         private const double MinRating = 0.00;
         private const double MaxRating = 5.00;
         private const double RatingStep = 0.10;
@@ -92,6 +103,17 @@ namespace DLGameViewer.ViewModels
             get => _userMemo;
             set => SetProperty(ref _userMemo, value);
         }
+
+        // 추가된 메타데이터 속성
+        public string GameType { get => _gameType; set => SetProperty(ref _gameType, value); }
+        public string ReleaseDate { get => _releaseDate; set => SetProperty(ref _releaseDate, value); }
+        public string SalesCount { get => _salesCount; set => SetProperty(ref _salesCount, value); }
+        public string RatingCountDisplay { get => _ratingCountDisplay; set => SetProperty(ref _ratingCountDisplay, value); }
+        public string FileSize { get => _fileSize; set => SetProperty(ref _fileSize, value); }
+        public string SaveFolderPath { get => _saveFolderPath; set => SetProperty(ref _saveFolderPath, value); }
+        public string DateAdded { get => _dateAdded; set => SetProperty(ref _dateAdded, value); }
+        public string LastPlayed { get => _lastPlayed; set => SetProperty(ref _lastPlayed, value); }
+        public string PlayTime { get => _playTime; set => SetProperty(ref _playTime, value); }
 
         public string DisplayedFullImagePath
         {
@@ -169,13 +191,24 @@ namespace DLGameViewer.ViewModels
             {
                 currentRating = Math.Clamp(parsedRating, MinRating, MaxRating);
             }
-            Rating = currentRating.ToString("N1", CultureInfo.InvariantCulture);
+            Rating = currentRating.ToString("N2", CultureInfo.InvariantCulture);
             
             CoverImageUrl = _game.CoverImageUrl;
             LocalImagePath = _game.LocalImagePath;
             FolderPath = _game.FolderPath;
             ExecutableFiles = string.Join("\n", _game.ExecutableFiles ?? new List<string>());
             UserMemo = _game.UserMemo;
+
+            // 추가된 메타데이터 로드
+            GameType = _game.GameType;
+            ReleaseDate = _game.ReleaseDate?.ToString("yyyy-MM-dd") ?? "N/A";
+            SalesCount = _game.SalesCount.ToString("N0", CultureInfo.InvariantCulture); // 숫자 형식 (예: 1,234)
+            RatingCountDisplay = _game.RatingCount.ToString("N0", CultureInfo.InvariantCulture);
+            FileSize = _game.FileSize;
+            SaveFolderPath = _game.SaveFolderPath;
+            DateAdded = _game.DateAdded.ToString("yyyy-MM-dd HH:mm:ss");
+            LastPlayed = _game.LastPlayed?.ToString("yyyy-MM-dd HH:mm:ss") ?? "N/A";
+            PlayTime = _game.PlayTime.ToString(@"hh\:mm\:ss");
             
             // 현재 표시할 이미지 설정
             DisplayedFullImagePath = _game.CoverImagePath;
@@ -217,6 +250,13 @@ namespace DLGameViewer.ViewModels
             _game.CoverImageUrl = CoverImageUrl;
             // CoverImagePath, LocalImagePath는 여기서 변경하지 않음
             _game.UserMemo = UserMemo;
+
+            // 추가된 메타데이터 저장 (편집 가능한 경우)
+            _game.GameType = GameType; 
+            // ReleaseDate, SalesCount, RatingCount 등은 보통 웹에서 가져오므로 직접 저장 로직은 제외 (필요시 추가)
+            _game.FileSize = FileSize; 
+            _game.SaveFolderPath = SaveFolderPath;
+            // DateAdded, LastPlayed, PlayTime 등은 시스템 관리 필드이므로 직접 저장 로직은 제외
             
             RequestClose?.Invoke(this, true);
         }
