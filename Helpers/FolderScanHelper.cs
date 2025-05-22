@@ -44,7 +44,7 @@ namespace DLGameViewer.Helpers {
                             string initialStatusMessage = $"게임 폴더 정보 처리 시작: {Path.GetFileName(game.FolderPath)}, 식별자: {game.Identifier}";
                             progressCallback(initialStatusMessage, game, -1);
 
-                            if (databaseService.IsGameExists(game.Identifier)) {
+                            if (await databaseService.GameExistsAsync(game.Identifier)) {
                                 string duplicateMessage = $"  -> {game.Identifier}: 이미 데이터베이스에 존재합니다. 건너뜀.";
                                 progressCallback(duplicateMessage, game, -1);
                                 return;
@@ -58,16 +58,16 @@ namespace DLGameViewer.Helpers {
                                 fetchedGameInfo.SaveFolderPath = game.SaveFolderPath;
                                 fetchedGameInfo.DateAdded = DateTime.Now;
 
-                                long addResult = databaseService.AddGame(fetchedGameInfo);
-                                if (addResult > 0) {
-                                    string successMessage = $"  -> '{fetchedGameInfo.Title}' ({game.Identifier}): 웹 메타데이터와 함께 데이터베이스에 추가됨 (ID: {addResult}).";
-                                    progressCallback(successMessage, fetchedGameInfo, addResult);
+                                try{
+                                    await databaseService.AddGameAsync(fetchedGameInfo);
+                                    string successMessage = $"  -> '{fetchedGameInfo.Title}' ({game.Identifier}): 웹 메타데이터와 함께 데이터베이스에 추가됨.";
+                                    progressCallback(successMessage, fetchedGameInfo, 0);
                                     // 성공적으로 추가된 게임을 scannedGamesOutput에 추가 (동기화 문제 고려 필요 시 Lock 사용)
                                     lock (scannedGamesOutput) {
                                        scannedGamesOutput.Add(fetchedGameInfo);
                                     }
-                                } else {
-                                    string errorMessage = $"  -> {game.Identifier}: 데이터베이스 추가 중 오류 발생 (코드: {addResult}).";
+                                } catch (Exception ex) {
+                                    string errorMessage = $"  -> {game.Identifier}: 데이터베이스 추가 중 오류 발생: {ex.Message}";
                                     progressCallback(errorMessage, null, -1);
                                 }
                             } else {
@@ -75,15 +75,15 @@ namespace DLGameViewer.Helpers {
                                 progressCallback(noMetadataMessage, game, -1);
                                 
                                 game.DateAdded = DateTime.Now; // 로컬 정보에도 추가 날짜 설정
-                                long addResult = databaseService.AddGame(game);
-                                if (addResult > 0) {
-                                    string localSuccessMessage = $"  -> '{game.Title}' ({game.Identifier}): 로컬 정보만 데이터베이스에 추가됨 (ID: {addResult}).";
-                                    progressCallback(localSuccessMessage, game, addResult);
+                                try{
+                                    await databaseService.AddGameAsync(game);
+                                    string localSuccessMessage = $"  -> '{game.Title}' ({game.Identifier}): 로컬 정보만 데이터베이스에 추가됨.";
+                                    progressCallback(localSuccessMessage, game, 0);
                                     lock (scannedGamesOutput) {
                                         scannedGamesOutput.Add(game);
                                     }
-                                } else {
-                                    string localErrorMessage = $"  -> {game.Identifier}: 데이터베이스 추가 중 오류 발생 (코드: {addResult}).";
+                                } catch (Exception ex) {
+                                    string localErrorMessage = $"  -> {game.Identifier}: 데이터베이스 추가 중 오류 발생: {ex.Message}";
                                     progressCallback(localErrorMessage, null, -1);
                                 }
                             }
@@ -104,6 +104,58 @@ namespace DLGameViewer.Helpers {
             }
             // 완료 메시지
             progressCallback("스캔 완료", null, -1);
+        }
+
+        public static async Task ProcessTestScanAsync(
+            string folderPath,
+            List<GameInfo> scannedGamesOutput,
+            IDatabaseService databaseService,
+            ProgressUpdateCallback progressCallback
+        ) {
+            // 테스트 스캐너 서비스 생성
+            var testScanner = new TestFolderScannerService();
+            
+            // 스캔 시작 메시지
+            string scanMessage = $"테스트 데이터 스캔을 시작합니다...";
+            progressCallback(scanMessage, null, -1);
+
+            try {
+                var localScannedGames = await testScanner.ScanDirectoryAsync(folderPath);
+
+                if (localScannedGames.Any()) {
+                    string scanResultMessage = $"{localScannedGames.Count}개의 테스트 게임 생성됨, 데이터베이스에 추가 중...";
+                    progressCallback(scanResultMessage, null, -1);
+
+                    foreach (var game in localScannedGames) {
+                        if (await databaseService.GameExistsAsync(game.Identifier)) {
+                            string duplicateMessage = $"  -> {game.Identifier}: 이미 데이터베이스에 존재합니다. 건너뜀.";
+                            progressCallback(duplicateMessage, game, -1);
+                            continue;
+                        }
+                        try{
+                            game.DateAdded = DateTime.Now;
+                            await databaseService.AddGameAsync(game);
+                            string successMessage = $"  -> '{game.Title}' ({game.Identifier}): 데이터베이스에 추가됨.";
+                            progressCallback(successMessage, game, -1);
+                            lock (scannedGamesOutput) {
+                                scannedGamesOutput.Add(game);
+                            }
+                        } catch (Exception ex) {
+                            string errorMessage = $"  -> {game.Identifier}: 데이터베이스 추가 중 오류 발생: {ex.Message}";
+                            progressCallback(errorMessage, null, -1);
+                        }
+                    }
+                } else {
+                    string noGamesMessage = "테스트 데이터를 생성하지 못했습니다.";
+                    progressCallback(noGamesMessage, null, -1);
+                }
+            } catch (Exception ex) {
+                string errorMessage = $"테스트 스캔 중 오류 발생: {ex.Message}";
+                progressCallback(errorMessage, null, -1);
+            }
+
+            // 완료 메시지
+            progressCallback("테스트 스캔 완료", null, -1);
         }
     }
 } 

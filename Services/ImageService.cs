@@ -35,6 +35,11 @@ namespace DLGameViewer.Services {
 
                 string localImagePath = Path.Combine(identifierFolderPath, fileName);
 
+                // 이미지 파일이 이미 존재하는 경우 경로만 반환
+                if (File.Exists(localImagePath)) {
+                    return identifierFolderPath;
+                }
+
                 // HTTP GET 요청을 사용하여 이미지 다운로드
                 byte[] imageBytes = await _httpClient.GetByteArrayAsync(imageUrl);
 
