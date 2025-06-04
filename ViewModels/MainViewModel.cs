@@ -24,9 +24,9 @@ namespace DLGameViewer.ViewModels {
         private GameInfo? _selectedGame;
         private string _searchText = string.Empty;
         private string _statusMessage = string.Empty;
-        private string _sortField = "추가일"; // 기본 정렬: 추가일
+        private string _sortField = "제목"; // 기본 정렬: 추가일
         private bool _isAscending = false;    // 기본 정렬 방향: 내림차순 (최신순)
-        private string _searchField = "전체"; 
+        private string _searchField = "전체";
         private CancellationTokenSource? _searchCancellationSource;
         private const int DEBOUNCE_DELAY_MS = 500;
         private ObservableCollection<GameInfo> _games;
@@ -214,6 +214,10 @@ namespace DLGameViewer.ViewModels {
         public ICommand AboutCommand { get; private set; }
         public ICommand ClearSearchCommand { get; private set; }
         public ICommand SortCommand { get; private set; }
+        // 새로운 명령 추가
+        public ICommand RefreshGameDataCommand { get; private set; }
+        public ICommand OpenDlSiteCommand { get; private set; }
+        public ICommand OpenSaveFolderCommand { get; private set; }
 
         // 페이지네이션 명령
         public ICommand NextPageCommand { get; private set; }
@@ -230,6 +234,7 @@ namespace DLGameViewer.ViewModels {
             IWebMetadataService webMetadataService,
             IImageService imageService) {
             _databaseService = databaseService;
+            _databaseService.InitializeDatabaseAsync();
             _folderScannerService = folderScannerService;
             _webMetadataService = webMetadataService;
             _imageService = imageService;
@@ -240,7 +245,7 @@ namespace DLGameViewer.ViewModels {
             StatusMessage = "준비";
 
             SearchFields = new List<string> { "전체", "제목", "식별자", "제작자", "장르", "게임 타입" };
-            SortFields = new List<string> { "추가일", "제목", "식별자", "제작자", "평점", "최근 실행", "출시일", "장르", "파일 크기", "플레이 시간" };
+            SortFields = new List<string> { "제목", "식별자", "제작자", "판매량", "평점", "평점수", "출시일", "추가일", "파일 크기", "최근 실행", "플레이 시간" };
 
             ScanFolderCommand = new RelayCommand(async _ => await ScanFolderAsync(), _ => !IsLoading);
             RefreshGameListCommand = new RelayCommand(async _ => { CurrentPage = 1; await LoadGamesToGridAsync(); }, _ => !IsLoading);
@@ -254,6 +259,11 @@ namespace DLGameViewer.ViewModels {
             AboutCommand = new RelayCommand(_ => ShowAboutInfo());
             ClearSearchCommand = new RelayCommand(async _ => await ClearSearchAsync(), _ => !string.IsNullOrEmpty(SearchText) && !IsLoading);
             SortCommand = new RelayCommand(async param => await SortAsync(param as string), param => param is string && !IsLoading);
+
+            // 새로운 명령 초기화
+            RefreshGameDataCommand = new RelayCommand(async param => await RefreshGameDataAsync(param as GameInfo), param => param is GameInfo && !IsLoading);
+            OpenDlSiteCommand = new RelayCommand(param => OpenDlSite(param as GameInfo), param => param is GameInfo);
+            OpenSaveFolderCommand = new RelayCommand(param => OpenSaveFolder(param as GameInfo), param => param is GameInfo && !string.IsNullOrEmpty(((GameInfo)param).SaveFolderPath));
 
             NextPageCommand = new RelayCommand(async _ => await ChangePageAsync(CurrentPage + 1), _ => CanGoNextPage && !IsLoading);
             PreviousPageCommand = new RelayCommand(async _ => await ChangePageAsync(CurrentPage - 1), _ => CanGoPreviousPage && !IsLoading);
@@ -286,28 +296,25 @@ namespace DLGameViewer.ViewModels {
             }
         }
 
-        private string GetDbSortField(string uiSortField)
-        {
-            return uiSortField switch
-            {
+        private string GetDbSortField(string uiSortField) {
+            return uiSortField switch {
                 "제목" => "Title",
                 "식별자" => "Identifier",
                 "제작자" => "Creator",
+                "판매량" => "SalesCount",
                 "평점" => "Rating",
+                "평점수" => "RatingCount",
                 "추가일" => "DateAdded",
                 "최근 실행" => "LastPlayed",
                 "출시일" => "ReleaseDate",
-                "장르" => "Genres",
                 "파일 크기" => "FileSize",
                 "플레이 시간" => "PlayTime",
                 _ => "DateAdded",
             };
         }
 
-        private string GetDbSearchField(string uiSearchField)
-        {
-            return uiSearchField switch
-            {
+        private string GetDbSearchField(string uiSearchField) {
+            return uiSearchField switch {
                 "전체" => "All",
                 "제목" => "Title",
                 "식별자" => "Identifier",
@@ -328,40 +335,35 @@ namespace DLGameViewer.ViewModels {
 
                 string dbSortField = GetDbSortField(SortField);
                 string dbSearchField = GetDbSearchField(SearchField);
-                
+
                 List<GameInfo> gamesFromDb = await _databaseService.GetGamesAsync(CurrentPage, PageSize, dbSortField, IsAscending, SearchText, dbSearchField);
-                
+
                 TotalGameCount = await _databaseService.GetTotalGameCountAsync(SearchText, dbSearchField);
 
-                if (Application.Current?.Dispatcher != null && !Application.Current.Dispatcher.CheckAccess())
-                {
+                if (Application.Current?.Dispatcher != null && !Application.Current.Dispatcher.CheckAccess()) {
                     Application.Current.Dispatcher.Invoke(() => {
                         Games.Clear();
                         foreach (var game in gamesFromDb) {
                             Games.Add(game);
                         }
                     });
-                }
-                else
-                {
+                } else {
                     Games.Clear();
                     foreach (var game in gamesFromDb) {
                         Games.Add(game);
                     }
                 }
-                
-                StatusMessage = TotalGameCount > 0 ? $"총 {TotalGameCount}개 중 {Games.Count}개 표시 (페이지 {CurrentPage}/{TotalPages})" : "표시할 게임 없음";
-            }
-            catch (Exception ex) {
+
+                StatusMessage = TotalGameCount > 0 ? $"페이지 {CurrentPage}/{TotalPages}" : "표시할 게임 없음";
+            } catch (Exception ex) {
                 StatusMessage = $"게임 목록 로드 중 오류: {ex.Message}";
                 Debug.WriteLine($"LoadGamesToGridAsync Error: {ex.Message}");
-            }
-            finally {
+            } finally {
                 IsLoading = false;
                 _loadGamesLock.Release();
             }
         }
-        
+
         private async Task ClearSearchAsync() {
             SearchText = string.Empty;
         }
@@ -377,13 +379,24 @@ namespace DLGameViewer.ViewModels {
                 SortField = field;
                 IsAscending = true; // 새로운 필드를 선택할 때는 항상 오름차순으로 시작
             }
-            
+
             CurrentPage = 1;
             await LoadGamesToGridAsync();
         }
 
-        private async Task ScanFolderAsync() {
-            IsLoading = true;
+        private void UpdateGamesCollection(GameInfo gameInfo, long gameId) {
+            gameInfo.Id = gameId;
+
+            Application.Current.Dispatcher.Invoke(() => {
+                if (!Games.Any(g => g.Id == gameId)) {
+                    Games.Add(gameInfo);
+                    StatusMessage = $"스캔 중: {Games.Count}개 게임 발견";
+                }
+            });
+        }
+
+        private async Task ScanFolderAsync() {            
+            IsLoading = true; // 로딩 상태 설정 (UI는 이제 게임 목록을 가리지 않음)            
             StatusMessage = "폴더 스캔 중...";
 
             var scanResultDialog = new ScanResultDialog();
@@ -454,28 +467,16 @@ namespace DLGameViewer.ViewModels {
             }
         }
 
-        private void UpdateGamesCollection(GameInfo gameInfo, long gameId) {
-            gameInfo.Id = gameId;
-
-            Application.Current.Dispatcher.Invoke(() => {
-                if (!Games.Any(g => g.Id == gameId)) {
-                    Games.Add(gameInfo);
-                }
-            });
-        }
-
         private async Task ShowGameInfo(GameInfo? game) {
             if (game == null) return;
             var gameDetails = await _databaseService.GetGameAsync(game.Identifier);
-            if (gameDetails == null)
-            {
-                 MessageBox.Show("선택된 게임의 상세 정보를 찾을 수 없습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Warning);
-                 return;
+            if (gameDetails == null) {
+                MessageBox.Show("선택된 게임의 상세 정보를 찾을 수 없습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
 
             var infoDialog = new GameInfoDialog(gameDetails) { Owner = Application.Current.MainWindow };
-            if (infoDialog.ShowDialog() == true)
-            {
+            if (infoDialog.ShowDialog() == true) {
                 if (infoDialog.Game != null) {
                     await _databaseService.UpdateGameAsync(infoDialog.Game);
                     await LoadGamesToGridAsync();
@@ -607,6 +608,102 @@ namespace DLGameViewer.ViewModels {
         private void ShowAboutInfo() {
             MessageBox.Show("DL Game Viewer v1.0\n\n© 2024 All rights reserved.",
                            "프로그램 정보", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private async Task RefreshGameDataAsync(GameInfo? game) {
+            if (game == null) {
+                MessageBox.Show("게임 정보를 찾을 수 없습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try {
+                IsLoading = true;
+                StatusMessage = $"{game.Title} 데이터 갱신 중...";
+
+                // 웹에서 새로운 메타데이터 가져오기
+                GameInfo updatedInfo = await _webMetadataService.FetchMetadataAsync(game.Identifier);
+
+                // 기존 데이터와 병합 (파일 정보 등 로컬 정보는 유지)
+                updatedInfo.Id = game.Id;
+                updatedInfo.FolderPath = game.FolderPath;
+                updatedInfo.SaveFolderPath = game.SaveFolderPath;
+                updatedInfo.ExecutableFiles = game.ExecutableFiles;
+                updatedInfo.DateAdded = game.DateAdded;
+                updatedInfo.LastPlayed = game.LastPlayed;
+                updatedInfo.PlayTime = game.PlayTime;
+                updatedInfo.FileSizeInBytes = game.FileSizeInBytes;
+                updatedInfo.UserMemo = game.UserMemo;
+
+                // 데이터베이스 업데이트
+                await _databaseService.UpdateGameAsync(updatedInfo);
+
+                // UI 갱신
+                await LoadGamesToGridAsync();
+
+                StatusMessage = $"{game.Title} 데이터 갱신 성공";
+                MessageBox.Show($"{game.Title} 게임의 메타데이터가 성공적으로 갱신되었습니다.", "갱신 완료", MessageBoxButton.OK, MessageBoxImage.Information);
+            } catch (Exception ex) {
+                StatusMessage = "데이터 갱신 실패";
+                MessageBox.Show($"데이터 갱신 중 오류 발생: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+            } finally {
+                IsLoading = false;
+            }
+        }
+
+        private void OpenDlSite(GameInfo? game) {
+            if (game == null || string.IsNullOrEmpty(game.Identifier)) {
+                MessageBox.Show("유효한 게임 식별자를 찾을 수 없습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try {
+                StatusMessage = $"{game.Title} DLsite 페이지 열기 중...";
+
+                string url = game.Identifier.StartsWith("VJ")
+                    ? $"https://www.dlsite.com/pro/work/=/product_id/{game.Identifier}.html/?locale=ko_KR"
+                    : $"https://www.dlsite.com/maniax/work/=/product_id/{game.Identifier}.html/?locale=ko_KR";
+
+                var psi = new System.Diagnostics.ProcessStartInfo {
+                    FileName = url,
+                    UseShellExecute = true
+                };
+                System.Diagnostics.Process.Start(psi);
+
+                StatusMessage = $"{game.Title} DLsite 페이지 열림";
+            } catch (Exception ex) {
+                StatusMessage = "웹페이지 열기 실패";
+                MessageBox.Show($"DLsite 페이지를 여는 중 오류 발생: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenSaveFolder(GameInfo? game) {
+            if (game == null || string.IsNullOrEmpty(game.SaveFolderPath)) {
+                MessageBox.Show("세이브 폴더 경로를 찾을 수 없습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try {
+                StatusMessage = $"{game.Title} 세이브 폴더 열기 중...";
+
+                // 폴더가 실제로 존재하는지 확인
+                if (!System.IO.Directory.Exists(game.SaveFolderPath)) {
+                    MessageBox.Show($"세이브 폴더가 존재하지 않습니다: {game.SaveFolderPath}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                    StatusMessage = "세이브 폴더 없음";
+                    return;
+                }
+
+                var psi = new System.Diagnostics.ProcessStartInfo {
+                    FileName = "explorer.exe",
+                    Arguments = $"\"{game.SaveFolderPath}\"",
+                    UseShellExecute = true
+                };
+                System.Diagnostics.Process.Start(psi);
+
+                StatusMessage = $"{game.Title} 세이브 폴더 열림";
+            } catch (Exception ex) {
+                StatusMessage = "세이브 폴더 열기 실패";
+                MessageBox.Show($"세이브 폴더를 여는 중 오류 발생: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

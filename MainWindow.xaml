@@ -50,8 +50,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/> <!-- 버튼 및 검색 도구 모음 -->
                 <RowDefinition Height="*"/>    <!-- 게임 목록 ItemsControl -->
-                <RowDefinition Height="Auto"/> <!-- 페이지네이션 컨트롤 -->
-                <RowDefinition Height="Auto"/> <!-- 상태바 -->
+                <RowDefinition Height="Auto"/> <!-- 통합된 페이지네이션 및 상태바 -->
             </Grid.RowDefinitions>
 
             <!-- 검색 및 정렬 도구 모음 (Grid.Row="0") -->
@@ -139,9 +138,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.Template>
                             <ControlTemplate>
-                                <ScrollViewer Focusable="False" Padding="{TemplateBinding Padding}">
-                                    <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                                </ScrollViewer>
+                                <ItemsPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
                             </ControlTemplate>
                         </ItemsControl.Template>
                         <ItemsControl.Style>
@@ -168,6 +165,18 @@
                                                       Style="{StaticResource MenuItemStyle}"/>
                                             <MenuItem Header="폴더 열기" 
                                                       Command="{Binding PlacementTarget.Tag.OpenFolderCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      Style="{StaticResource MenuItemStyle}"/>
+                                            <MenuItem Header="세이브 폴더 열기" 
+                                                      Command="{Binding PlacementTarget.Tag.OpenSaveFolderCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      Style="{StaticResource MenuItemStyle}"/>
+                                            <MenuItem Header="DLsite 페이지 방문" 
+                                                      Command="{Binding PlacementTarget.Tag.OpenDlSiteCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
+                                                      Style="{StaticResource MenuItemStyle}"/>
+                                            <MenuItem Header="웹 데이터 갱신" 
+                                                      Command="{Binding PlacementTarget.Tag.RefreshGameDataCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
                                                       Style="{StaticResource MenuItemStyle}"/>
                                             <MenuItem Header="데이터베이스에서 삭제" 
@@ -224,44 +233,47 @@
                 </ScrollViewer>
                 <TextBlock Text="로딩 중..." 
                            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24" 
-                           Foreground="{DynamicResource AccentBrush}" FontWeight="Bold"/>
+                           HorizontalAlignment="Center" VerticalAlignment="Top" FontSize="16" Margin="0,10,0,0"
+                           Foreground="{DynamicResource AccentBrush}" FontWeight="Bold" Background="{DynamicResource CardBackgroundBrush}" Padding="10,5"/>
             </Grid>
             
-            <!-- 페이지네이션 컨트롤 (Grid.Row="2") -->
-            <Border Grid.Row="2" Padding="5" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource CardBackgroundBrush}">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <TextBlock Text="페이지당 표시:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource ForegroundBrush}"/>
-                    <ComboBox ItemsSource="{Binding PageSizes}"
-                              SelectedItem="{Binding PageSize, Mode=TwoWay}"
-                              Width="70" Margin="0,0,20,0" VerticalAlignment="Center"
-                              Style="{StaticResource DefaultComboBoxStyle}"/>
-                    
-                    <Button Content="&lt;" Command="{Binding PreviousPageCommand}" IsEnabled="{Binding CanGoPreviousPage}" Style="{StaticResource PaginationButtonStyle}" Margin="0,0,5,0"/>
-                    <TextBlock VerticalAlignment="Center" Margin="5,0,5,0" Foreground="{DynamicResource ForegroundBrush}">
-                        <TextBlock.Text>
-                            <MultiBinding StringFormat="{}{0} / {}{1} 페이지">
-                                <Binding Path="CurrentPage"/>
-                                <Binding Path="TotalPages"/>
-                            </MultiBinding>
-                        </TextBlock.Text>
-                    </TextBlock>
-                    <Button Content="&gt;" Command="{Binding NextPageCommand}" IsEnabled="{Binding CanGoNextPage}" Style="{StaticResource PaginationButtonStyle}" Margin="5,0,0,0"/>
-                </StackPanel>
-            </Border>
-            
-            <!-- 상태바 (Grid.Row="3") -->
-            <StatusBar Grid.Row="3" Height="28" Background="{DynamicResource CardBackgroundBrush}" 
+            <!-- 상태바 (Grid.Row="2") - 페이지네이션 컨트롤 통합 -->
+            <StatusBar Grid.Row="2" Height="40" Background="{DynamicResource CardBackgroundBrush}" 
                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
-                <StatusBarItem>
+                <StatusBar.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <DockPanel HorizontalAlignment="Stretch" />
+                    </ItemsPanelTemplate>
+                </StatusBar.ItemsPanel>
+                
+                <StatusBarItem DockPanel.Dock="Left">
                     <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource ForegroundBrush}"/>
                 </StatusBarItem>
-                <!-- 페이지네이션 정보와 중복될 수 있으므로 Games.Count 표시는 주석 처리 또는 다른 정보로 대체 고려 -->
-                <!-- 
-                <StatusBarItem HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding Games.Count, StringFormat=총 {0}개 게임}" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0" />
+                
+                <StatusBarItem DockPanel.Dock="Right">
+                    <TextBlock Text="{Binding TotalGameCount, StringFormat=총 {0}개 게임}" Foreground="{DynamicResource ForegroundBrush}" Margin="0,0,10,0" />
                 </StatusBarItem>
-                -->
+                
+                <StatusBarItem HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="페이지당 표시:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                        <ComboBox ItemsSource="{Binding PageSizes}"
+                                  SelectedItem="{Binding PageSize, Mode=TwoWay}"
+                                  Width="70" Margin="0,0,20,0" VerticalAlignment="Center"
+                                  Style="{StaticResource DefaultComboBoxStyle}"/>
+                        
+                        <Button Content="&lt;" Command="{Binding PreviousPageCommand}" IsEnabled="{Binding CanGoPreviousPage}" Style="{StaticResource PaginationButtonStyle}" Margin="0,0,5,0"/>
+                        <TextBlock VerticalAlignment="Center" Margin="5,0,5,0" Foreground="{DynamicResource ForegroundBrush}">
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} / {}{1} 페이지">
+                                    <Binding Path="CurrentPage"/>
+                                    <Binding Path="TotalPages"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                        <Button Content="&gt;" Command="{Binding NextPageCommand}" IsEnabled="{Binding CanGoNextPage}" Style="{StaticResource PaginationButtonStyle}" Margin="5,0,0,0"/>
+                    </StackPanel>
+                </StatusBarItem>
             </StatusBar>
         </Grid>
     </DockPanel>

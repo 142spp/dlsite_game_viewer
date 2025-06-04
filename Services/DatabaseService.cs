@@ -76,7 +76,9 @@ namespace DLGameViewer.Services {
                         ReleaseDate TEXT,
                         FileSize TEXT,
                         PlayTime TEXT,
-                        UserMemo TEXT
+                        UserMemo TEXT,
+                        IsArchive INTEGER DEFAULT 0, -- Boolean as INTEGER
+                        ArchiveFilePath TEXT
                     );
                 ";
                 await command.ExecuteNonQueryAsync();
@@ -117,7 +119,9 @@ namespace DLGameViewer.Services {
                                 ReleaseDate TEXT,
                                 FileSize TEXT,
                                 PlayTime TEXT,
-                                UserMemo TEXT
+                                UserMemo TEXT,
+                                IsArchive INTEGER DEFAULT 0, -- Boolean as INTEGER
+                                ArchiveFilePath TEXT
                             );
                         ";
                         await command.ExecuteNonQueryAsync();
@@ -150,11 +154,11 @@ namespace DLGameViewer.Services {
                     INSERT INTO GameInfo (Identifier, Title, Creator, GameType, Genres, SalesCount, Rating, RatingCount, 
                                         CoverImageUrl, CoverImagePath, LocalImagePath, FolderPath, SaveFolderPath, ExecutableFiles, 
                                         DateAdded, LastPlayed, ReleaseDate, FileSize, PlayTime, 
-                                        UserMemo)
+                                        UserMemo, IsArchive, ArchiveFilePath)
                     VALUES ($Identifier, $Title, $Creator, $GameType, $Genres, $SalesCount, $Rating, $RatingCount, 
                             $CoverImageUrl, $CoverImagePath, $LocalImagePath, $FolderPath, $SaveFolderPath, $ExecutableFiles, 
                             $DateAdded, $LastPlayed, $ReleaseDate, $FileSize, $PlayTime, 
-                            $UserMemo);
+                            $UserMemo, $IsArchive, $ArchiveFilePath);
                 ";
 
                 command.Parameters.AddWithValue("$Identifier", game.Identifier);
@@ -177,6 +181,8 @@ namespace DLGameViewer.Services {
                 command.Parameters.AddWithValue("$FileSize", game.FileSize ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$PlayTime", game.PlayTime == TimeSpan.Zero ? (object)DBNull.Value : game.PlayTime.ToString());
                 command.Parameters.AddWithValue("$UserMemo", game.UserMemo ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$IsArchive", game.IsArchive ? 1 : 0);
+                command.Parameters.AddWithValue("$ArchiveFilePath", game.ArchiveFilePath ?? (object)DBNull.Value);
 
                 try {
                     await command.ExecuteNonQueryAsync();
@@ -254,7 +260,9 @@ namespace DLGameViewer.Services {
                     ReleaseDate = $ReleaseDate, 
                     FileSize = $FileSize, 
                     PlayTime = $PlayTime,
-                    UserMemo = $UserMemo
+                    UserMemo = $UserMemo,
+                    IsArchive = $IsArchive,
+                    ArchiveFilePath = $ArchiveFilePath
                   WHERE Identifier = $Identifier;";
 
                 command.Parameters.AddWithValue("$Identifier", game.Identifier);
@@ -277,6 +285,8 @@ namespace DLGameViewer.Services {
                 command.Parameters.AddWithValue("$FileSize", game.FileSize ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("$PlayTime", game.PlayTime == TimeSpan.Zero ? (object)DBNull.Value : game.PlayTime.ToString());
                 command.Parameters.AddWithValue("$UserMemo", game.UserMemo ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("$IsArchive", game.IsArchive ? 1 : 0);
+                command.Parameters.AddWithValue("$ArchiveFilePath", game.ArchiveFilePath ?? (object)DBNull.Value);
 
                 await command.ExecuteNonQueryAsync();
             }
@@ -331,19 +341,32 @@ namespace DLGameViewer.Services {
                 parameters["$SearchTerm"] = $"%{searchTerm}%";
             }
 
-            // Sorting
+            // 특수 정렬 케이스 처리
+            bool needsCustomSort = false;
+            bool isIdentifierSort = false;
+            bool isFileSizeSort = false;
+
             if (!string.IsNullOrWhiteSpace(sortBy)) {
+                if (sortBy.Equals("Identifier", StringComparison.OrdinalIgnoreCase) || 
+                    sortBy.Equals("FileSize", StringComparison.OrdinalIgnoreCase)) {
+                    // 기본 쿼리에서는 일반 정렬 사용, 후처리에서 식별자 숫자, 바이트 기준으로 정렬
+                    needsCustomSort = true;
+                    isIdentifierSort = true;
+                } else {} 
+                // 일반 정렬
                 string direction = isAscending ? "ASC" : "DESC";
                 sqlBuilder.Append($" ORDER BY {SanitizeIdentifier(sortBy)} {direction}");
             } else {
-                 // 기본 정렬 순서 (예: DateAdded DESC)
-                sqlBuilder.Append(" ORDER BY DateAdded DESC");
+                // 기본 정렬
+                sqlBuilder.Append(" ORDER BY Title DESC");
             }
 
-            // Pagination
-            sqlBuilder.Append(" LIMIT $PageSize OFFSET $Offset;");
-            parameters["$PageSize"] = pageSize;
-            parameters["$Offset"] = (pageNumber - 1) * pageSize;
+            // 페이지네이션은 커스텀 정렬 후에 적용하기 위해 여기서는 적용하지 않음
+            if (!needsCustomSort) {
+                sqlBuilder.Append(" LIMIT $PageSize OFFSET $Offset;");
+                parameters["$PageSize"] = pageSize;
+                parameters["$Offset"] = (pageNumber - 1) * pageSize;
+            }
 
             using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
                 await connection.OpenAsync();
@@ -359,7 +382,86 @@ namespace DLGameViewer.Services {
                     }
                 }
             }
+
+            // 커스텀 정렬 적용
+            if (needsCustomSort) {
+                if (isIdentifierSort) {
+                    games = SortGamesByIdentifier(games, isAscending);
+                } else if (isFileSizeSort) {
+                    games = SortGamesByFileSize(games, isAscending);
+                }
+
+                // 정렬 후 페이지네이션 적용
+                int totalCount = games.Count;
+                games = games.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+            }
+
             return games;
+        }
+        
+        // 식별자 기준 정렬 (RJ/VJ 뒤의 숫자 기준)
+        private List<GameInfo> SortGamesByIdentifier(List<GameInfo> games, bool isAscending) {
+            return games.OrderBy(g => {
+                if (string.IsNullOrEmpty(g.Identifier))
+                    return isAscending ? int.MaxValue : int.MinValue;
+
+                // RJ, VJ 등의 접두사 추출
+                string prefix = string.Empty;
+                string numericPart = g.Identifier;
+
+                if (g.Identifier.Length >= 2) {
+                    prefix = g.Identifier.Substring(0, 2);
+                    numericPart = g.Identifier.Substring(2);
+                }
+
+                // 숫자 부분만 추출하여 정수로 변환
+                if (int.TryParse(numericPart, out int numericValue)) {
+                    return numericValue;
+                }
+                
+                return isAscending ? int.MaxValue : int.MinValue;
+            }, isAscending ? Comparer<int>.Default : Comparer<int>.Create((x, y) => y.CompareTo(x))).ToList();
+        }
+
+        // 파일 크기 기준 정렬 (KB, MB, GB 단위 고려)
+        private List<GameInfo> SortGamesByFileSize(List<GameInfo> games, bool isAscending) {
+            return games.OrderBy(g => {
+                if (string.IsNullOrEmpty(g.FileSize))
+                    return isAscending ? long.MinValue : long.MaxValue;
+
+                // 파일 크기를 바이트 단위로 변환
+                return ConvertFileSizeToBytes(g.FileSize);
+            }, isAscending ? Comparer<long>.Default : Comparer<long>.Create((x, y) => y.CompareTo(x))).ToList();
+        }
+
+        // 파일 크기 문자열(예: "1.5 MB")을 바이트로 변환
+        private long ConvertFileSizeToBytes(string? fileSizeStr) {
+            if (string.IsNullOrEmpty(fileSizeStr))
+                return 0;
+
+            try {
+                // 숫자와 단위 분리
+                string[] parts = fileSizeStr.Split(' ');
+                if (parts.Length != 2)
+                    return 0;
+
+                if (!double.TryParse(parts[0], out double size))
+                    return 0;
+
+                string unit = parts[1].ToUpperInvariant();
+                
+                return unit switch {
+                    "B" => (long)size,
+                    "KB" => (long)(size * 1024),
+                    "MB" => (long)(size * 1024 * 1024),
+                    "GB" => (long)(size * 1024 * 1024 * 1024),
+                    "TB" => (long)(size * 1024 * 1024 * 1024 * 1024),
+                    _ => 0
+                };
+            }
+            catch {
+                return 0;
+            }
         }
 
         public async Task<int> GetTotalGameCountAsync(string? searchTerm = null, string? searchField = null) {
@@ -440,12 +542,15 @@ namespace DLGameViewer.Services {
                 ReleaseDate = reader.IsDBNull(reader.GetOrdinal("ReleaseDate")) ? (DateTime?)null : DateTime.Parse(reader.GetString(reader.GetOrdinal("ReleaseDate"))),
                 FileSize = reader.IsDBNull(reader.GetOrdinal("FileSize")) ? null : reader.GetString(reader.GetOrdinal("FileSize")),
                 PlayTime = reader.IsDBNull(reader.GetOrdinal("PlayTime")) ? TimeSpan.Zero : TimeSpan.Parse(reader.GetString(reader.GetOrdinal("PlayTime"))),
-                UserMemo = reader.IsDBNull(reader.GetOrdinal("UserMemo")) ? null : reader.GetString(reader.GetOrdinal("UserMemo"))
+                UserMemo = reader.IsDBNull(reader.GetOrdinal("UserMemo")) ? null : reader.GetString(reader.GetOrdinal("UserMemo")),
+                IsArchive = reader.IsDBNull(reader.GetOrdinal("IsArchive")) ? false : reader.GetInt32(reader.GetOrdinal("IsArchive")) == 1,
+                ArchiveFilePath = reader.IsDBNull(reader.GetOrdinal("ArchiveFilePath")) ? null : reader.GetString(reader.GetOrdinal("ArchiveFilePath"))
             };
         }
         
         // DeserializeList, ParseIdentifierString, ParseFileSizeString 헬퍼 메서드는 
         // CreateGameInfoFromReader 내부에서 직접 처리하거나, 필요하다면 유지합니다.
         // 여기서는 CreateGameInfoFromReader에서 직접 처리하는 방식으로 변경했습니다.
+
     }
 } 

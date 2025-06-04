@@ -1,128 +1,252 @@
 # DLGameViewer (DL 게임 뷰어)
 
-DLGameViewer는 DLsite 게임 및 콘텐츠를 로컬에서 관리하고 실행할 수 있는 Windows 데스크톱 애플리케이션입니다. 이 프로그램은 C#과 WPF로 개발되었으며, 사용자가 로컬 폴더에서 게임을 스캔하고, 메타데이터를 자동으로 가져오며, 게임을 분류하고 실행할 수 있는 직관적인 인터페이스를 제공합니다.
+DLGameViewer는 DLsite 게임 및 콘텐츠를 로컬에서 효율적으로 관리하고 실행할 수 있는 Windows 데스크톱 애플리케이션입니다. WPF와 MVVM 패턴을 활용하여 개발되었으며, 의존성 주입을 통한 모듈식 아키텍처를 구현했습니다.
 
-## 주요 기능
+## ✨ 주요 기능
 
-- **폴더 스캔**: 지정한 로컬 폴더를 재귀적으로 스캔하여 DLsite 콘텐츠를 자동으로 찾습니다
-- **식별자 추출**: 폴더명에서 DLsite 식별자(RJ, VJ로 시작하는 번호)를 자동으로 추출합니다
-- **메타데이터 수집**: 식별자를 기반으로 DLsite에서 제목, 제작자, 장르, 평점 등의 메타데이터를 자동으로 가져옵니다
-- **이미지 관리**: 커버 이미지를 자동으로 다운로드하고 로컬에 저장합니다
-- **실행 파일 관리**: 폴더 내에서 실행 가능한 파일(.exe)을 찾아 관리합니다
-- **데이터베이스 관리**: 모든 정보는 SQLite 데이터베이스에 저장되어 효율적으로 관리됩니다
-- **게임 목록 표시**: 수집된 게임 정보를 이미지와 함께 목록 형태로 표시합니다
-- **검색 및 필터링**: 제목, 제작자, 식별자 등으로 게임을 검색하고 필터링할 수 있습니다
-- **상세 정보 관리**: 개별 게임의 상세 정보를 확인하고 편집할 수 있습니다
-- **실행 및 관리**: 게임 폴더를 열거나 실행 파일을 직접 실행할 수 있습니다
-- **데이터 정리**: 더 이상 존재하지 않는 폴더의 항목을 데이터베이스에서 제거할 수 있습니다
+### 🔍 콘텐츠 스캔 및 관리
+- **지능형 폴더 스캔**: 로컬 폴더를 재귀적으로 스캔하여 DLsite 콘텐츠를 자동 감지
+- **식별자 추출**: 폴더명에서 DLsite 식별자(RJ, VJ, RE 등)를 정확하게 추출
+- **실행 파일 감지**: 게임 폴더 내 실행 가능한 파일(.exe) 자동 탐지
+- **파일 크기 계산**: 폴더별 정확한 파일 크기 정보 제공
 
-## 기술 스택
+### 🌐 메타데이터 자동 수집
+- **웹 스크래핑**: DLsite에서 제목, 제작자, 장르, 평점 등 자동 수집
+- **이미지 관리**: 커버 이미지 자동 다운로드 및 로컬 저장
+- **태그 및 장르**: 상세한 게임 분류 정보 수집
+- **판매량 및 평점**: 실시간 인기도 정보 제공
 
+### 📊 고급 검색 및 정렬
+- **다중 검색 필드**: 제목, 제작자, 식별자, 장르별 세밀한 검색
+- **실시간 검색**: 입력과 동시에 결과 필터링 (디바운싱 적용)
+- **다양한 정렬 옵션**: 제목, 제작자, 추가일, 크기, 평점 등으로 정렬
+- **페이지네이션**: 대량 데이터 효율적 표시 (10~200개/페이지)
+
+### 🎮 게임 실행 및 관리
+- **원클릭 실행**: 게임 폴더 또는 실행 파일 직접 실행
+- **세이브 폴더 관리**: 게임별 세이브 데이터 경로 저장 및 관리
+- **플레이타임 추적**: 게임별 플레이 시간 및 마지막 플레이 시간 기록
+- **사용자 메모**: 개인적인 게임 노트 및 평가 저장
+
+### 🎨 사용자 인터페이스
+- **라이트/다크 테마**: 시스템 테마에 맞춘 자동 전환
+- **반응형 디자인**: 윈도우 크기에 따른 동적 레이아웃 조정
+- **한글 폰트 최적화**: Noto Sans KR 폰트 적용으로 한글 가독성 향상
+- **직관적 네비게이션**: 명확한 아이콘과 단축키 지원
+
+## 🛠 기술 스택
+
+### 코어 기술
 - **언어**: C# (.NET 9.0)
 - **UI 프레임워크**: WPF (Windows Presentation Foundation)
-- **데이터베이스**: SQLite (Microsoft.Data.Sqlite)
-- **웹 크롤링**: HtmlAgilityPack, HtmlAgilityPack.CssSelectors.NetCore
-- **비동기 처리**: Task 기반 비동기 프로그래밍
+- **아키텍처 패턴**: MVVM (Model-View-ViewModel)
+- **의존성 주입**: Microsoft.Extensions.DependencyInjection
 
-## 구현 상세
+### 데이터베이스 및 스토리지
+- **데이터베이스**: SQLite (Microsoft.Data.Sqlite 9.0.4)
+- **JSON 직렬화**: System.Text.Json
+- **파일 시스템**: .NET File I/O API
 
-이 프로젝트는 모던 C#의 기능과 WPF의 MVVM 패턴을 활용하여 구현되었습니다.
+### 웹 기술
+- **웹 스크래핑**: HtmlAgilityPack 1.12.1
+- **CSS 셀렉터**: HtmlAgilityPack.CssSelectors.NetCore 1.2.1
+- **HTTP 클라이언트**: HttpClient (비동기 요청)
 
-### 주요 컴포넌트 설명
+### 성능 최적화
+- **비동기 처리**: async/await 패턴 전반 적용
+- **메모리 관리**: IDisposable 패턴 구현
+- **UI 응답성**: 백그라운드 작업 및 진행률 표시
 
-1. **데이터 모델 (Models)**
-   - `GameInfo`: 게임 정보를 표현하는 모델 클래스로, 식별자, 제목, 제작자, 이미지 경로 등의 정보를 포함합니다.
+## 📁 프로젝트 구조
 
-2. **서비스 레이어 (Services)**
-   - `DatabaseService`: SQLite 데이터베이스 연결 및 CRUD 작업을 담당합니다. 모든 게임 정보가 이 서비스를 통해 로컬 데이터베이스에 저장됩니다.
-   - `FolderScannerService`: 로컬 폴더를 재귀적으로 스캔하여 DLsite 콘텐츠의 식별자를 추출하고, 실행 파일을 찾는 기능을 제공합니다.
-   - `WebMetadataService`: 추출된 식별자를 기반으로 DLsite 웹사이트에서 메타데이터를 수집합니다. HtmlAgilityPack을 활용한 웹 스크래핑 기법을 사용합니다.
-   - `ImageService`: 웹에서 이미지를 다운로드하고 로컬에 저장하는 기능을 담당합니다.
+```
+DLGameViewer/
+├── Models/                      # 데이터 모델
+│   └── GameInfo.cs             # 게임 정보 엔티티 (INotifyPropertyChanged 구현)
+├── ViewModels/                  # MVVM 뷰모델
+│   ├── MainViewModel.cs        # 메인 화면 로직 (페이지네이션, 검색, 정렬)
+│   ├── GameInfoViewModel.cs    # 게임 상세 정보 관리
+│   ├── ScanResultViewModel.cs  # 스캔 진행 상황 관리
+│   ├── ViewModelBase.cs        # 공통 뷰모델 기반 클래스
+│   └── RelayCommand.cs         # ICommand 구현체
+├── Services/                    # 비즈니스 로직 서비스
+│   ├── DatabaseService.cs      # SQLite 데이터베이스 CRUD
+│   ├── FolderScannerService.cs # 폴더 스캔 및 식별자 추출
+│   ├── WebMetadataService.cs   # DLsite 웹 스크래핑
+│   └── ImageService.cs         # 이미지 다운로드 및 저장
+├── Interfaces/                  # 서비스 인터페이스
+│   ├── IDatabaseService.cs
+│   ├── IFolderScannerService.cs
+│   ├── IWebMetadataService.cs
+│   └── IImageService.cs
+├── Views/                       # UI 정의
+│   ├── MainWindow.xaml         # 메인 애플리케이션 윈도우
+│   └── Dialogs/                # 대화상자 컬렉션
+│       ├── GameInfoDialog.xaml    # 게임 상세 정보 편집
+│       ├── ScanResultDialog.xaml  # 스캔 진행 상황 표시
+│       └── ExecutableSelectionDialog.xaml # 실행 파일 선택
+├── Helpers/                     # 유틸리티 클래스
+│   ├── ThemeManager.cs         # 라이트/다크 테마 관리
+│   ├── FolderScanHelper.cs     # 폴더 스캔 도우미
+│   └── GameExecutionHelper.cs  # 게임 실행 도우미
+├── Styles/                      # WPF 스타일 및 테마
+├── Resources/                   # 리소스 파일
+│   ├── Fonts/                  # 폰트 파일 (Noto Sans KR)
+│   └── favicon.ico             # 애플리케이션 아이콘
+└── Utils/                       # 유틸리티 및 컨버터
+```
 
-3. **사용자 인터페이스 (UI)**
-   - `MainWindow`: 주요 애플리케이션 윈도우로, 게임 목록 표시, 폴더 스캔, 게임 실행 등의 기능을 제공합니다.
-   - `GameInfoDialog`: 게임 상세 정보를 표시하고 편집할 수 있는 다이얼로그 창입니다.
-   - `ScanResultDialog`: 폴더 스캔 과정의 진행 상황을 실시간으로 표시하는 다이얼로그 창입니다.
-   - `ExecutableSelectionDialog`: 여러 실행 파일이 있을 경우 사용자가 선택할 수 있는 다이얼로그 창입니다.
+## 🏗 아키텍처 특징
 
-4. **유틸리티 (Utils)**
-   - `Converters`: WPF 데이터 바인딩에 사용되는 값 변환기(Value Converter)를 제공합니다. 주로 이미지 경로를 이미지 소스로 변환하는 기능을 담당합니다.
+### MVVM 패턴 구현
+- **Model**: `GameInfo` 클래스로 데이터 구조 정의
+- **View**: XAML 파일로 UI 선언적 정의
+- **ViewModel**: 비즈니스 로직과 UI 상태 관리, `INotifyPropertyChanged` 구현
 
-### 비동기 처리
+### 의존성 주입 (DI)
+- 서비스 레이어 인터페이스 기반 설계
+- `App.xaml.cs`에서 DI 컨테이너 구성
+- 테스트 가능한 모듈식 아키텍처
 
-- 모든 시간이 오래 걸리는 작업(웹 요청, 파일 시스템 접근, 데이터베이스 작업)은 비동기로 처리되어 UI의 응답성을 유지합니다.
-- C#의 `async/await` 패턴을 활용하여 코드의 가독성과 유지보수성을 높였습니다.
+### 비동기 프로그래밍
+- 모든 I/O 작업 비동기 처리
+- UI 스레드 블로킹 방지
+- CancellationToken을 통한 작업 취소 지원
 
-### 데이터 저장
+### 데이터베이스 설계
+```sql
+-- 주요 테이블 구조
+Games (
+    Id INTEGER PRIMARY KEY,
+    Identifier TEXT UNIQUE,
+    Title TEXT,
+    Creator TEXT,
+    GameType TEXT,
+    Genres TEXT (JSON),
+    SalesCount INTEGER,
+    Rating TEXT,
+    RatingCount INTEGER,
+    FolderPath TEXT,
+    SaveFolderPath TEXT,
+    ExecutableFiles TEXT (JSON),
+    DateAdded DATETIME,
+    LastPlayed DATETIME,
+    ReleaseDate DATETIME,
+    FileSize TEXT,
+    PlayTime TEXT,
+    UserMemo TEXT
+)
+```
 
-- 모든 게임 정보는 SQLite 데이터베이스에 저장됩니다.
-- 이미지는 로컬 파일 시스템에 저장되고, 데이터베이스에는 이미지 경로만 저장됩니다.
-- 복잡한 데이터 구조(리스트 등)는 JSON 형식으로 직렬화하여 데이터베이스에 저장합니다.
+## 🚀 설치 및 실행
 
-### UI 디자인
+### 시스템 요구사항
+- **운영체제**: Windows 10 1809 이상 (Windows 11 권장)
+- **프레임워크**: .NET 9.0 런타임
+- **메모리**: 최소 512MB RAM
+- **저장공간**: 100MB 이상 여유 공간
 
-- WPF의 데이터 바인딩을 활용하여 MVVM(Model-View-ViewModel) 패턴에 가까운 디자인을 구현했습니다.
-- 반응형 UI로 설계되어 윈도우 크기 변경에 적절하게 대응합니다.
-- 이미지 크기는 윈도우 크기에 맞게 자동으로 조정됩니다.
+### 실행 방법
+1. [Releases](https://github.com/your-repo/releases) 페이지에서 최신 버전 다운로드
+2. 압축 해제 후 `DLGameViewer.exe` 실행
+3. 첫 실행 시 폴더 스캔 경로 설정
+4. '스캔 시작' 버튼으로 게임 라이브러리 구축
 
-## 시스템 요구사항
+### 개발 환경 설정
+```bash
+# 저장소 클론
+git clone https://github.com/your-repo/DLGameViewer.git
+cd DLGameViewer
 
-- Windows OS
-- .NET 9.0 런타임
-- 최소 100MB의 하드 디스크 공간
+# 의존성 복원
+dotnet restore
 
-## 설치 및 실행 방법
+# 빌드
+dotnet build
 
-1. 최신 릴리스를 다운로드합니다.
-2. 압축을 해제하고 원하는 위치에 저장합니다.
-3. DLGameViewer.exe를 실행합니다.
-4. 초기 설정에서 스캔할 폴더 경로를 추가합니다.
-5. '스캔 시작' 버튼을 클릭하여 게임을 검색합니다.
+# 실행
+dotnet run
+```
 
-## 프로젝트 구조
+## 📝 사용법
 
-- **Models/**
-  - `GameInfo.cs`: 게임 정보 모델 클래스
-- **Services/**
-  - `DatabaseService.cs`: SQLite 데이터베이스 관리
-  - `FolderScannerService.cs`: 로컬 폴더 스캔 및 식별자 추출
-  - `WebMetadataService.cs`: DLsite에서 메타데이터 수집
-  - `ImageService.cs`: 이미지 다운로드 및 관리
-- **Dialogs/**
-  - `GameInfoDialog.xaml/.cs`: 게임 상세 정보 다이얼로그
-  - `ScanResultDialog.xaml/.cs`: 스캔 결과 다이얼로그
-  - `ExecutableSelectionDialog.xaml/.cs`: 실행 파일 선택 다이얼로그
-- **Utils/**
-  - `Converters.cs`: WPF용 데이터 변환기 (이미지 경로 등)
-- **MainWindow.xaml/.cs**: 메인 애플리케이션 윈도우
+### 1. 초기 설정
+- 애플리케이션 실행 후 '폴더 추가' 버튼 클릭
+- DLsite 게임이 저장된 로컬 폴더 선택
+- '스캔 시작'으로 자동 메타데이터 수집 시작
 
-## 향후 계획
+### 2. 게임 관리
+- **검색**: 상단 검색창에서 제목/제작자/식별자로 검색
+- **정렬**: 드롭다운에서 정렬 기준 선택 (제목, 날짜, 크기 등)
+- **페이지 이동**: 하단 페이지네이션으로 대량 데이터 탐색
 
-### 사용자 편의성 증대
-- 네비게이션 바 구현 (파일/도구/도움말 메뉴)
-- 고급 정렬 기능 추가
-- 고급 필터 및 검색 기능 향상
-- 그리드 뷰 외에 리스트 형태로 보기 기능 추가
-- 게임 상세정보 페이지에서 태그를 하이퍼링크 형태로 구현 및 관리 기능 개선
-- 세이브 폴더 경로 저장 기능
-- 플레이타임 추적 기능 구현
-- 마지막 플레이 시간 저장 및 표시
-- 압축 파일(ZIP, RAR 등) 지원 추가
+### 3. 게임 실행
+- 게임 선택 후 '게임 실행' 버튼 클릭
+- 여러 실행 파일이 있을 경우 선택 다이얼로그 표시
+- 실행 시 자동으로 플레이타임 추적 시작
 
-### 최적화
-- 대량의 게임 데이터 처리 시 성능 개선
-- 메모리 사용량 최적화
-- 이미지 캐싱 시스템 개선
+### 4. 상세 정보 관리
+- 게임 더블클릭으로 상세 정보 창 열기
+- 메타데이터 수동 편집 및 사용자 메모 추가
+- 세이브 폴더 경로 설정
 
-### 심미성 증대
-- 다크 모드 테마 추가
-- 사용자 인터페이스 디자인 개선
-- 다양한 테마 옵션 제공
+## 🔄 향후 계획
 
-## 라이선스
+### Phase 1: 사용자 경험 개선
+- [ ] 고급 필터링 시스템 (출시일, 파일 크기, 평점 범위)
+- [ ] 게임 태그 시스템 및 사용자 정의 태그
+- [ ] 즐겨찾기 및 위시리스트 기능
+- [ ] 게임 리뷰 및 개인 평점 시스템
 
-MIT 라이선스
+### Phase 2: 확장 기능
+- [ ] 압축 파일 지원 (ZIP, RAR, 7z)
+- [ ] 게임 스크린샷 갤러리
+- [ ] 온라인 백업 및 동기화
+- [ ] 플러그인 시스템
 
-## 주의사항
+### Phase 3: 성능 및 최적화
+- [ ] 가상화된 리스트 뷰 (수만 개 게임 처리)
+- [ ] 이미지 지연 로딩 및 캐싱 최적화
+- [ ] 멀티스레드 스캔 성능 향상
+- [ ] 메모리 사용량 최적화
 
-이 애플리케이션은 개인 용도로만 사용하는 것을 권장합니다. DLsite의 콘텐츠 사용에 관한 이용약관을 준수해 주세요. 
+### Phase 4: 디자인 및 접근성
+- [ ] 머티리얼 디자인 UI 개선
+- [ ] 접근성 향상 (스크린 리더 지원)
+- [ ] 다국어 지원 (영어, 일본어)
+- [ ] 사용자 정의 테마 및 레이아웃
+
+## 🤝 기여하기
+
+### 개발 가이드라인
+1. 코드 스타일: [C# 코딩 컨벤션](https://docs.microsoft.com/ko-kr/dotnet/csharp/fundamentals/coding-style/) 준수
+2. MVVM 패턴 유지
+3. 모든 I/O 작업 비동기 처리
+4. 단위 테스트 작성 권장
+
+### 버그 리포트 및 기능 요청
+- [Issues](https://github.com/your-repo/issues) 페이지에서 버그 신고
+- 재현 단계와 환경 정보 포함 필수
+- 기능 요청 시 사용 시나리오 상세 설명
+
+## 📄 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+
+## ⚠️ 주의사항
+
+- 이 애플리케이션은 **개인 용도로만** 사용하는 것을 권장합니다
+- DLsite 콘텐츠 사용 시 해당 사이트의 이용약관을 준수해야 합니다
+- 웹 스크래핑 기능은 DLsite 웹사이트 구조 변경 시 영향을 받을 수 있습니다
+- 로컬에 저장된 콘텐츠의 저작권은 원 저작자에게 있습니다
+
+## 🙏 감사의 말
+
+- **HtmlAgilityPack**: 웹 스크래핑 라이브러리 제공
+- **Microsoft**: .NET 및 WPF 프레임워크
+- **SQLite**: 경량 데이터베이스 엔진
+- **Noto Fonts**: 한글 폰트 지원
+
+---
+
+**DLGameViewer**로 더 나은 게임 라이브러리 관리 경험을 시작해보세요! 🎮 

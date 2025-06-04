@@ -20,7 +20,7 @@ namespace DLGameViewer.Services {
         public string? MakerId { get; set; }
 
         [JsonPropertyName("dl_count")]
-        public int DlCount { get; set; }
+        public object? DlCount { get; set; } // string 또는 int를 모두 처리할 수 있도록 object로 변경
 
         [JsonPropertyName("wishlist_count")]
         public int WishlistCount { get; set; }
@@ -36,14 +36,15 @@ namespace DLGameViewer.Services {
 
         [JsonPropertyName("regist_date")]
         public string? RegistDate { get; set; }
-
     }
 
     public class WebMetadataService : IWebMetadataService {
         private readonly HttpClient _httpClient;
         private readonly IImageService _imageService; // ImageService 인터페이스로 변경
-        private const string _dlsiteApiUrl = "https://www.dlsite.com/maniax/product/info/ajax?product_id={0}";
-        private const string _dlsiteHtmlUrl = "https://www.dlsite.com/maniax/work/=/product_id/{0}.html/?locale=ko_KR";
+        private const string _dlsiteProApiUrl = "https://www.dlsite.com/pro/product/info/ajax?product_id={0}";
+        private const string _dlsiteProHtmlUrl = "https://www.dlsite.com/pro/work/=/product_id/{0}.html/?locale=ko_KR";
+        private const string _dlsiteManiaxApiUrl = "https://www.dlsite.com/maniax/product/info/ajax?product_id={0}";
+        private const string _dlsiteManiaxHtmlUrl = "https://www.dlsite.com/maniax/work/=/product_id/{0}.html/?locale=ko_KR";
 
         public WebMetadataService(IImageService imageService) { // 생성자에서 IImageService 주입
             _httpClient = new HttpClient();
@@ -58,9 +59,13 @@ namespace DLGameViewer.Services {
                 return new GameInfo { Identifier = identifier };
             }
 
-            // dlsite.com URL 구성 (maniax 카테고리 기준, 한국어 로캘 추가)
-            string apiUrl = string.Format(_dlsiteApiUrl, identifier);
-            string htmlUrl = string.Format(_dlsiteHtmlUrl, identifier);
+            // dlsite.com URL 구성 (identifier 접두사에 따라 다른 URL 사용)
+            string apiUrl = identifier.StartsWith("VJ") 
+                ? string.Format(_dlsiteProApiUrl, identifier)
+                : string.Format(_dlsiteManiaxApiUrl, identifier);
+            string htmlUrl = identifier.StartsWith("VJ")
+                ? string.Format(_dlsiteProHtmlUrl, identifier)
+                : string.Format(_dlsiteManiaxHtmlUrl, identifier);
             GameInfo gameInfo = new GameInfo { Identifier = identifier };
 
             // API 호출 시도
@@ -69,10 +74,10 @@ namespace DLGameViewer.Services {
                 if (string.IsNullOrWhiteSpace(apiContent)) {
                     return gameInfo;
                 }
-
+                
                 var apiResponse = JsonSerializer.Deserialize<Dictionary<string, ProductApiDetails>>(apiContent);
-                if (apiResponse != null && apiResponse.TryGetValue(identifier, out ProductApiDetails productDetails)) {
-                    gameInfo.SalesCount = productDetails.DlCount; 
+                if (apiResponse != null && apiResponse.TryGetValue(identifier, out var productDetails)) {
+                    gameInfo.SalesCount = Int32.Parse(productDetails.DlCount?.ToString() ?? "0"); 
                     gameInfo.Rating = productDetails.RateAverage2dp.ToString("F2", CultureInfo.InvariantCulture);
                     gameInfo.RatingCount = productDetails.RateCount;
                     

@@ -6,6 +6,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DLGameViewer.Models;
 using DLGameViewer.Interfaces;
+using SharpCompress.Archives;
+using SharpCompress.Common;
 
 namespace DLGameViewer.Services
 {
@@ -13,6 +15,13 @@ namespace DLGameViewer.Services
     {
         // RJ, VJ로 시작하고 그 뒤에 2자리 이상의 숫자가 오는 패턴 (예: RJ123456, VJ00)
         private static readonly Regex IdentifierRegex = new Regex(@"(RJ|VJ)[\s_]?\d{5,}", RegexOptions.IgnoreCase);
+        
+        // 지원하는 압축파일 확장자들
+        private static readonly HashSet<string> SupportedArchiveExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ".zip", ".7z", ".rar", ".tar", ".gz", ".bz2", ".xz"
+        };
+        
         private readonly IDatabaseService _databaseService;
         private readonly IWebMetadataService _webMetadataService;
 
@@ -27,8 +36,13 @@ namespace DLGameViewer.Services
             if (!Directory.Exists(directoryPath)){
                 return foundGames;
             }
-            // 재귀적으로 폴더 스캔 시작
+            
+            // 1. 폴더 스캔 (기존 로직)
             await ScanFoldersRecursivelyAsync(directoryPath, foundGames);
+            
+            // 2. 압축파일 스캔 (새로운 로직)
+            await ScanArchiveFilesAsync(directoryPath, foundGames);
+            
             return foundGames;
         }
 
@@ -107,6 +121,64 @@ namespace DLGameViewer.Services
                     .FirstOrDefault()
             );
             gameInfo.SaveFolderPath = saveFolderPath ?? string.Empty;
+        }
+
+        private async Task ScanArchiveFilesAsync(string directoryPath, List<GameInfo> foundGames) {
+            try {
+                // 현재 디렉토리와 하위 디렉토리에서 압축파일 찾기
+                var archiveFiles = await Task.Run(() =>
+                    Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories)
+                        .Where(file => SupportedArchiveExtensions.Contains(Path.GetExtension(file)))
+                        .ToList()
+                );
+
+                foreach (var archiveFile in archiveFiles) {
+                    try {
+                        // 압축파일명에서 식별자 추출
+                        string fileName = Path.GetFileNameWithoutExtension(archiveFile);
+                        Match match = IdentifierRegex.Match(fileName);
+
+                        if (match.Success) {
+                            string identifier = match.Value.Replace("_", "").Replace(" ", "").ToUpper();
+                            
+                            var gameInfo = new GameInfo {
+                                Identifier = identifier,
+                                Title = fileName,
+                                FolderPath = Path.GetDirectoryName(archiveFile) ?? string.Empty,
+                                IsArchive = true,
+                                ArchiveFilePath = archiveFile,
+                                FileSize = GetFileSizeString(archiveFile)
+                            };
+
+                            foundGames.Add(gameInfo);
+                        }
+                    } catch (Exception ex) {
+                        // 개별 압축파일 처리 중 오류 발생 시 다음 파일로 계속 진행
+                        Console.WriteLine($"압축파일 처리 중 오류 발생 ({archiveFile}): {ex.Message}");
+                    }
+                }
+            } catch (Exception ex) {
+                Console.WriteLine($"압축파일 스캔 중 오류 발생: {ex.Message}");
+            }
+        }
+
+        private string GetFileSizeString(string filePath) {
+            try {
+                var fileInfo = new FileInfo(filePath);
+                long bytes = fileInfo.Length;
+                
+                if (bytes >= 1024 * 1024 * 1024) {
+                    return $"{bytes / (1024.0 * 1024.0 * 1024.0):F1} GB";
+                } else if (bytes >= 1024 * 1024) {
+                    return $"{bytes / (1024.0 * 1024.0):F1} MB";
+                } else if (bytes >= 1024) {
+                    return $"{bytes / 1024.0:F1} KB";
+                } else {
+                    return $"{bytes} bytes";
+                }
+            } catch {
+                return "알 수 없음";
+            }
         }
     }
 } 

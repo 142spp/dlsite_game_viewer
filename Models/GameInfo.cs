@@ -24,6 +24,8 @@ namespace DLGameViewer.Models
         private string _folderPath = string.Empty;
         private string _saveFolderPath = string.Empty;
         private List<string> _executableFiles = new List<string>();
+        private bool _isArchive;
+        private string _archiveFilePath = string.Empty;
         private DateTime _dateAdded;
         private DateTime? _lastPlayed;
         private DateTime? _releaseDate;
@@ -50,6 +52,8 @@ namespace DLGameViewer.Models
         public string FolderPath { get => _folderPath; set => SetProperty(ref _folderPath, value); }
         public string SaveFolderPath { get => _saveFolderPath; set => SetProperty(ref _saveFolderPath, value); }
         public List<string> ExecutableFiles { get => _executableFiles; set => SetProperty(ref _executableFiles, value); }
+        public bool IsArchive { get => _isArchive; set => SetProperty(ref _isArchive, value); }
+        public string ArchiveFilePath { get => _archiveFilePath; set => SetProperty(ref _archiveFilePath, value); }
         public DateTime DateAdded { get => _dateAdded; set => SetProperty(ref _dateAdded, value); }
         public DateTime? LastPlayed { get => _lastPlayed; set => SetProperty(ref _lastPlayed, value); }
         public DateTime? ReleaseDate { get => _releaseDate; set => SetProperty(ref _releaseDate, value); }
@@ -91,6 +95,7 @@ namespace DLGameViewer.Models
             LocalImagePath = string.Empty;
             FolderPath = string.Empty;
             UserMemo = string.Empty;
+            ArchiveFilePath = string.Empty;
         }
     }
 } 
