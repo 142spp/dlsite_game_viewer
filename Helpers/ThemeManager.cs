@@ -5,12 +5,16 @@ using System.Windows;
 namespace DLGameViewer.Helpers {
     public enum ThemeType {
         Light,
-        Dark
+        Dark,
+        DeepOcean,
+        CrimsonNight,
     }
 
     public class ThemeManager {
         private const string LightThemeSource = "Styles/LightTheme.xaml";
         private const string DarkThemeSource = "Styles/DarkTheme.xaml";
+        private const string DeepOceanThemeSource = "Styles/DeepOceanTheme.xaml";
+        private const string CrimsonNightThemeSource = "Styles/CrimsonNightTheme.xaml";
         private const string ThemeSettingsFileName = "themesettings.txt";
         
         // 현재 선택된 테마 유형을 추적
@@ -26,11 +30,11 @@ namespace DLGameViewer.Helpers {
             
             try {
                 // 이전 테마 리소스 제거
-                string oldThemeSource = CurrentTheme == ThemeType.Light ? LightThemeSource : DarkThemeSource;
+                string oldThemeSource = GetThemeSource(CurrentTheme);
                 RemoveThemeResourceDictionary(oldThemeSource);
                 
                 // 새 테마 리소스 추가
-                string newThemeSource = theme == ThemeType.Light ? LightThemeSource : DarkThemeSource;
+                string newThemeSource = GetThemeSource(theme);
                 ApplyThemeResourceDictionary(newThemeSource);
                 
                 // 현재 테마 업데이트
@@ -64,6 +68,18 @@ namespace DLGameViewer.Helpers {
             }
         }
         
+        private static string GetThemeSource(ThemeType theme)
+        {
+            return theme switch
+            {
+                ThemeType.Light => LightThemeSource,
+                ThemeType.Dark => DarkThemeSource,
+                ThemeType.DeepOcean => DeepOceanThemeSource,
+                ThemeType.CrimsonNight => CrimsonNightThemeSource,
+                _ => LightThemeSource // Default to Light theme if unknown
+            };
+        }
+
         private static void ApplyThemeResourceDictionary(string source) {
             try {
                 // 새 테마 리소스 사전 생성 및 추가
@@ -129,7 +145,7 @@ namespace DLGameViewer.Helpers {
                 CurrentTheme = savedTheme;
                 
                 // 테마 적용
-                string themeSource = savedTheme == ThemeType.Light ? LightThemeSource : DarkThemeSource;
+                string themeSource = GetThemeSource(savedTheme);
                 ApplyThemeResourceDictionary(themeSource);
             }
             catch (Exception ex) {
@@ -148,7 +164,25 @@ namespace DLGameViewer.Helpers {
         
         // 테마 토글
         public static void ToggleTheme() {
-            ThemeType newTheme = CurrentTheme == ThemeType.Light ? ThemeType.Dark : ThemeType.Light;
+            ThemeType newTheme;
+            switch (CurrentTheme)
+            {
+                case ThemeType.Light:
+                    newTheme = ThemeType.Dark;
+                    break;
+                case ThemeType.Dark:
+                    newTheme = ThemeType.DeepOcean;
+                    break;
+                case ThemeType.DeepOcean:
+                    newTheme = ThemeType.CrimsonNight;
+                    break;
+                case ThemeType.CrimsonNight:
+                    newTheme = ThemeType.Light;
+                    break;
+                default:
+                    newTheme = ThemeType.Light; // Default case
+                    break;
+            }
             ChangeTheme(newTheme);
         }
     }

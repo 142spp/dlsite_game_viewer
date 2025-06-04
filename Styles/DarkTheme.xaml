@@ -4,15 +4,15 @@
     <!-- 공통 브러시를 다크 모드에 맞게 정의 -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="#222222"/>
     <SolidColorBrush x:Key="ForegroundBrush" Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="AccentBrush" Color="#0068A8"/>
-    <SolidColorBrush x:Key="BorderBrush" Color="#333333"/>
-    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#333333"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#0078D4"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#3C3C3C"/>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#2B2B2B"/>
     <SolidColorBrush x:Key="MenuBackgroundBrush" Color="#222222"/>
     <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#3A3A3A"/>
     <SolidColorBrush x:Key="ButtonHoverBrush" Color="#4A4A4A"/>
     <SolidColorBrush x:Key="WarningBrush" Color="#442222"/>
     <SolidColorBrush x:Key="WarningForegroundBrush" Color="#FF6666"/>
-    <SolidColorBrush x:Key="HighlightBrush" Color="#3F3F3F"/>
+    <SolidColorBrush x:Key="HighlightBrush" Color="#4A4A4A"/>
     <SolidColorBrush x:Key="PlaceholderBrush" Color="#CCCCCC"/>
     
     <!-- 스크롤바 관련 브러시 -->
@@ -20,8 +20,8 @@
     <SolidColorBrush x:Key="ScrollBarHoverBrush" Color="#333333"/>
     <SolidColorBrush x:Key="ScrollBarPressedBrush" Color="#444444"/>
     <SolidColorBrush x:Key="ScrollBarTrackBrush" Color="#111111"/>
-    <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="#444444"/>
-    <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="#666666"/>
+    <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="#555555"/>
+    <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="#777777"/>
     <SolidColorBrush x:Key="ScrollBarArrowBrush" Color="#666666"/>
     
     <!-- 다이얼로그 타이틀바 관련 브러시 -->

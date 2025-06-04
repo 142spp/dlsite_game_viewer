@@ -241,6 +241,15 @@
         </Setter>
     </Style>
     
+    <!-- MenuItem Style for Disabled State -->
+    <Style x:Key="DisabledStateMenuItemStyle" TargetType="MenuItem" BasedOn="{StaticResource MenuItemStyle}">
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="DimGray"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- Warning MenuItem Style -->
     <Style x:Key="WarningMenuItemStyle" TargetType="MenuItem" BasedOn="{StaticResource MenuItemStyle}">
         <Setter Property="Foreground" Value="{DynamicResource WarningForegroundBrush}"/>

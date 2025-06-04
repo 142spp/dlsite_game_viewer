@@ -1,4 +1,4 @@
-﻿<Window x:Class="DLGameViewer.MainWindow"
+<Window x:Class="DLGameViewer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -37,7 +37,7 @@
                 <MenuItem Header="초기화" Command="{Binding ClearDatabaseCommand}" Style="{StaticResource WarningMenuItemStyle}"/>
             </MenuItem>
             <MenuItem Header="설정" Style="{StaticResource MenuItemStyle}">
-                <MenuItem x:Name="ToggleThemeMenuItem" Header="다크 모드" Command="{Binding ToggleThemeCommand}" Style="{StaticResource MenuItemStyle}" IsCheckable="True" IsChecked="{Binding CurrentTheme, Converter={StaticResource ThemeTypeConverter}}"/>
+                <MenuItem x:Name="ToggleThemeMenuItem" Header="테마 변경" Command="{Binding ToggleThemeCommand}" Style="{StaticResource MenuItemStyle}" IsCheckable="True" IsChecked="{Binding CurrentTheme, Converter={StaticResource ThemeTypeConverter}}"/>
             </MenuItem>
             <MenuItem Header="도움말" Style="{StaticResource MenuItemStyle}">
                 <MenuItem Header="프로그램 정보" Command="{Binding AboutCommand}" Style="{StaticResource MenuItemStyle}"/>
@@ -170,7 +170,7 @@
                                             <MenuItem Header="세이브 폴더 열기" 
                                                       Command="{Binding PlacementTarget.Tag.OpenSaveFolderCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                                                      Style="{StaticResource MenuItemStyle}"/>
+                                                      Style="{StaticResource DisabledStateMenuItemStyle}"/>
                                             <MenuItem Header="DLsite 페이지 방문" 
                                                       Command="{Binding PlacementTarget.Tag.OpenDlSiteCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"

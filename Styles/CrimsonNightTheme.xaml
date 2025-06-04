@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Crimson Night Theme Brushes -->
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#FF1B0B0B"/>
+    <SolidColorBrush x:Key="ForegroundBrush" Color="#FFFFE0E0"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="#FFFF6B6B"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#FF4A2B2B"/>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FF2F1717"/>
+    <SolidColorBrush x:Key="MenuBackgroundBrush" Color="#FF1B0B0B"/>
+    <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="#FF4A2B2B"/>
+    <SolidColorBrush x:Key="ButtonHoverBrush" Color="#FF5E3E3E"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="#FF5E0000"/>
+    <SolidColorBrush x:Key="WarningForegroundBrush" Color="#FFFF9E9E"/>
+    <SolidColorBrush x:Key="HighlightBrush" Color="#FF3A2222"/>
+    <SolidColorBrush x:Key="PlaceholderBrush" Color="#FFD1A0A0"/>
+    
+    <SolidColorBrush x:Key="ScrollBarBackgroundBrush" Color="#FF1B0B0B"/>
+    <SolidColorBrush x:Key="ScrollBarHoverBrush" Color="#FF2F1717"/>
+    <SolidColorBrush x:Key="ScrollBarPressedBrush" Color="#FF4A2B2B"/>
+    <SolidColorBrush x:Key="ScrollBarTrackBrush" Color="#FF100505"/>
+    <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="#FF4A2B2B"/>
+    <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="#FF5E3E3E"/>
+    <SolidColorBrush x:Key="ScrollBarArrowBrush" Color="#FFFF6B6B"/>
+    
+    <SolidColorBrush x:Key="DialogTitleBarBrush" Color="#FF2F1717"/>
+    <SolidColorBrush x:Key="DialogTitleBarTextBrush" Color="#FFFFE0E0"/>
+    <SolidColorBrush x:Key="TextBoxBackgroundBrush" Color="#FF251010"/>
+    
+</ResourceDictionary>
