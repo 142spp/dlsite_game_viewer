@@ -11,10 +11,10 @@ namespace DLGameViewer.Helpers {
     }
 
     public class ThemeManager {
-        private const string LightThemeSource = "Styles/LightTheme.xaml";
-        private const string DarkThemeSource = "Styles/DarkTheme.xaml";
-        private const string DeepOceanThemeSource = "Styles/DeepOceanTheme.xaml";
-        private const string CrimsonNightThemeSource = "Styles/CrimsonNightTheme.xaml";
+        private const string LightThemeSource = "Styles/Themes/LightTheme.xaml";
+        private const string DarkThemeSource = "Styles/Themes/DarkTheme.xaml";
+        private const string DeepOceanThemeSource = "Styles/Themes/DeepOceanTheme.xaml";
+        private const string CrimsonNightThemeSource = "Styles/Themes/CrimsonNightTheme.xaml";
         private const string ThemeSettingsFileName = "themesettings.txt";
         
         // 현재 선택된 테마 유형을 추적

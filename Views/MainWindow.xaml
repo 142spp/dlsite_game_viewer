@@ -167,18 +167,6 @@
                                                       Command="{Binding PlacementTarget.Tag.OpenFolderCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
                                                       Style="{StaticResource MenuItemStyle}"/>
-                                            <MenuItem Header="세이브 폴더 열기" 
-                                                      Command="{Binding PlacementTarget.Tag.OpenSaveFolderCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
-                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                                                      Style="{StaticResource DisabledStateMenuItemStyle}"/>
-                                            <MenuItem Header="DLsite 페이지 방문" 
-                                                      Command="{Binding PlacementTarget.Tag.OpenDlSiteCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
-                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                                                      Style="{StaticResource MenuItemStyle}"/>
-                                            <MenuItem Header="웹 데이터 갱신" 
-                                                      Command="{Binding PlacementTarget.Tag.RefreshGameDataCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
-                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
-                                                      Style="{StaticResource MenuItemStyle}"/>
                                             <MenuItem Header="데이터베이스에서 삭제" 
                                                       Command="{Binding PlacementTarget.Tag.DeleteGameCommand, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}" 
                                                       CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}}"
