@@ -31,23 +31,29 @@ namespace DLGameViewer.Services
             _webMetadataService = webMetadataService;
         }
 
-        public async Task<List<GameInfo>> ScanDirectoryAsync(string directoryPath){
+        public async Task<List<GameInfo>> ScanDirectoryAsync(string directoryPath, CancellationToken cancellationToken){
             var foundGames = new List<GameInfo>();
             if (!Directory.Exists(directoryPath)){
                 return foundGames;
             }
             
+            cancellationToken.ThrowIfCancellationRequested();
+
             // 1. 폴더 스캔 (기존 로직)
-            await ScanFoldersRecursivelyAsync(directoryPath, foundGames);
+            await ScanFoldersRecursivelyAsync(directoryPath, foundGames, cancellationToken);
             
+            cancellationToken.ThrowIfCancellationRequested();
+
             // 2. 압축파일 스캔 (새로운 로직)
-            await ScanArchiveFilesAsync(directoryPath, foundGames);
+            await ScanArchiveFilesAsync(directoryPath, foundGames, cancellationToken);
             
             return foundGames;
         }
 
         // 재귀적으로 폴더를 스캔하는 메서드
-        private async Task ScanFoldersRecursivelyAsync(string currentPath, List<GameInfo> foundGames) {
+        private async Task ScanFoldersRecursivelyAsync(string currentPath, List<GameInfo> foundGames, CancellationToken cancellationToken) {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (!Directory.Exists(currentPath)) {
                 return;
             }
@@ -78,7 +84,8 @@ namespace DLGameViewer.Services
             try {
                 var subDirectories = await Task.Run(() => Directory.GetDirectories(currentPath));
                 foreach (var subDir in subDirectories) {
-                    await ScanFoldersRecursivelyAsync(subDir, foundGames);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await ScanFoldersRecursivelyAsync(subDir, foundGames, cancellationToken);
                 }
             } catch (UnauthorizedAccessException) {
                 // 접근 권한이 없는 폴더는 무시
@@ -123,8 +130,9 @@ namespace DLGameViewer.Services
             gameInfo.SaveFolderPath = saveFolderPath ?? string.Empty;
         }
 
-        private async Task ScanArchiveFilesAsync(string directoryPath, List<GameInfo> foundGames) {
+        private async Task ScanArchiveFilesAsync(string directoryPath, List<GameInfo> foundGames, CancellationToken cancellationToken) {
             try {
+                cancellationToken.ThrowIfCancellationRequested();
                 // 현재 디렉토리와 하위 디렉토리에서 압축파일 찾기
                 var archiveFiles = await Task.Run(() =>
                     Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories)
@@ -133,6 +141,7 @@ namespace DLGameViewer.Services
                 );
 
                 foreach (var archiveFile in archiveFiles) {
+                    cancellationToken.ThrowIfCancellationRequested();
                     try {
                         // 압축파일명에서 식별자 추출
                         string fileName = Path.GetFileNameWithoutExtension(archiveFile);

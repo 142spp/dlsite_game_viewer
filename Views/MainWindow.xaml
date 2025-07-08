@@ -20,6 +20,7 @@
         <utils:PathToImageSourceConverter x:Key="PathToImageSourceConverterInstance"/>
         <utils:ThemeTypeConverter x:Key="ThemeTypeConverter"/>
         <utils:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <utils:BooleanToInverseBooleanConverter x:Key="BooleanToInverseBooleanConverter"/>
         <utils:BooleanToTextConverter x:Key="BooleanToTextConverter"/>
     </Window.Resources>
     <Window.DataContext>
@@ -29,7 +30,7 @@
         <!-- 메뉴바 -->
         <Menu DockPanel.Dock="Top" Style="{StaticResource MenuStyle}">
             <MenuItem Header="파일" Style="{StaticResource MenuItemStyle}">
-                <MenuItem Header="폴더 스캔" Command="{Binding ScanFolderCommand}" Style="{StaticResource MenuItemStyle}"/>
+                <MenuItem Header="폴더 스캔" Command="{Binding ScanFolderCommand}" Style="{StaticResource MenuItemStyle}" IsEnabled="{Binding IsScanning, Converter={StaticResource BooleanToInverseBooleanConverter}}"/>
                 <MenuItem Header="종료" Command="{Binding ExitApplicationCommand}" Style="{StaticResource MenuItemStyle}"/>
             </MenuItem>
             <MenuItem Header="데이터베이스" Style="{StaticResource MenuItemStyle}">
@@ -110,7 +111,7 @@
                     <Grid Grid.Column="1">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="정렬:" Foreground="{DynamicResource ForegroundBrush}" 
-                                       VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                       VerticalAlignment="Center" Margin="10,0,5,0"/>
                             <ComboBox Width="120" Height="30" 
                                       ItemsSource="{Binding SortFields}"
                                       SelectedItem="{Binding SortField, Mode=TwoWay}"

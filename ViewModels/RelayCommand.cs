@@ -8,21 +8,17 @@ namespace DLGameViewer.ViewModels
     /// </summary>
     public class RelayCommand : ICommand
     {
-        private readonly Action<object> _execute;
-        private readonly Predicate<object> _canExecute;
+        private readonly Action<object?> _execute;
+        private readonly Predicate<object?>? _canExecute;
 
-        public event EventHandler CanExecuteChanged
-        {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
-        }
+        public event EventHandler? CanExecuteChanged;
 
         /// <summary>
         /// RelayCommand 생성자
         /// </summary>
         /// <param name="execute">실행 시 호출될 액션</param>
         /// <param name="canExecute">명령 실행 가능 여부를 판단하는 조건(생략 가능)</param>
-        public RelayCommand(Action<object> execute, Predicate<object> canExecute = null)
+        public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;
@@ -33,7 +29,7 @@ namespace DLGameViewer.ViewModels
         /// </summary>
         /// <param name="parameter">명령 매개변수</param>
         /// <returns>실행 가능 여부</returns>
-        public bool CanExecute(object parameter)
+        public bool CanExecute(object? parameter)
         {
             return _canExecute == null || _canExecute(parameter);
         }
@@ -42,9 +38,17 @@ namespace DLGameViewer.ViewModels
         /// 명령을 실행합니다.
         /// </summary>
         /// <param name="parameter">명령 매개변수</param>
-        public void Execute(object parameter)
+        public void Execute(object? parameter)
         {
             _execute(parameter);
+        }
+
+        /// <summary>
+        /// CanExecuteChanged 이벤트를 발생시켜 UI의 Command 상태를 갱신합니다.
+        /// </summary>
+        public void RaiseCanExecuteChanged()
+        {
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 } 

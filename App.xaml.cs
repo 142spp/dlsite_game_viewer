@@ -59,9 +59,6 @@ public partial class App : Application
             Console.WriteLine($"폰트 등록 오류: {ex.Message}");
         }
         
-        // 테마 초기화
-        ThemeManager.InitializeTheme();
-        
         // 테마 변경 이벤트 구독
         ThemeManager.ThemeChanged += OnThemeChanged;
         
@@ -85,6 +82,7 @@ public partial class App : Application
         services.AddSingleton<IImageService, ImageService>();
         services.AddSingleton<IWebMetadataService, WebMetadataService>();
         services.AddSingleton<IFolderScannerService, FolderScannerService>();
+        services.AddSingleton<ISettingsService, SettingsService>();
 
         // ViewModels 등록
         services.AddTransient<MainViewModel>();

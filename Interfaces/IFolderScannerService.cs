@@ -13,7 +13,8 @@ namespace DLGameViewer.Interfaces
         /// 지정된 디렉토리를 스캔하여 게임 정보를 수집합니다.
         /// </summary>
         /// <param name="directoryPath">스캔할 디렉토리 경로</param>
+        /// <param name="cancellationToken">취소 토큰</param>
         /// <returns>찾은 게임 정보 목록</returns>
-        Task<List<GameInfo>> ScanDirectoryAsync(string directoryPath);
+        Task<List<GameInfo>> ScanDirectoryAsync(string directoryPath, CancellationToken cancellationToken);
     }
 } 

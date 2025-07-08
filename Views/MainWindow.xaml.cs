@@ -13,19 +13,9 @@ namespace DLGameViewer;
 public partial class MainWindow : Window
 {
 
-    public MainWindow(
-        IDatabaseService databaseService,
-        IFolderScannerService folderScannerService,
-        IWebMetadataService webMetadataService,
-        IImageService imageService)
+    public MainWindow(MainViewModel viewModel)
     {
         InitializeComponent();
-        
-        // ViewModel 생성 및 DataContext 설정
-        DataContext = new MainViewModel(
-            databaseService,
-            folderScannerService,
-            webMetadataService,
-            imageService);
+        DataContext = viewModel;
     }
 }

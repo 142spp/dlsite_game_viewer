@@ -145,7 +145,7 @@ namespace DLGameViewer.Services {
             }
         }
 
-        public async Task AddGameAsync(GameInfo game) {
+        public async Task<long> AddGameAsync(GameInfo game) {
             using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
                 await connection.OpenAsync();
                 var command = connection.CreateCommand();
@@ -159,6 +159,8 @@ namespace DLGameViewer.Services {
                             $CoverImageUrl, $CoverImagePath, $LocalImagePath, $FolderPath, $SaveFolderPath, $ExecutableFiles, 
                             $DateAdded, $LastPlayed, $ReleaseDate, $FileSize, $PlayTime, 
                             $UserMemo, $IsArchive, $ArchiveFilePath);
+                    
+                    SELECT last_insert_rowid();
                 ";
 
                 command.Parameters.AddWithValue("$Identifier", game.Identifier);
@@ -185,7 +187,8 @@ namespace DLGameViewer.Services {
                 command.Parameters.AddWithValue("$ArchiveFilePath", game.ArchiveFilePath ?? (object)DBNull.Value);
 
                 try {
-                    await command.ExecuteNonQueryAsync();
+                    var newId = (long)(await command.ExecuteScalarAsync() ?? -1L);
+                    return newId;
                 } catch (SqliteException ex) {
                     // Log or handle specific SQLite errors, e.g., unique constraint violation
                     Console.WriteLine($"DatabaseService.AddGameAsync Error: {ex.Message}");

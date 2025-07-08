@@ -15,10 +15,11 @@ namespace DLGameViewer.Interfaces
         Task InitializeDatabaseAsync();
 
         /// <summary>
-        /// 게임 정보를 데이터베이스에 추가합니다.
+        /// 게임 정보를 데이터베이스에 추가하고, 추가된 항목의 ID를 반환합니다.
         /// </summary>
         /// <param name="game">게임 정보</param>
-        Task AddGameAsync(GameInfo game);
+        /// <returns>추가된 게임의 ID</returns>
+        Task<long> AddGameAsync(GameInfo game);
 
         /// <summary>
         /// 모든 게임 정보를 가져옵니다. (페이지네이션 없이)

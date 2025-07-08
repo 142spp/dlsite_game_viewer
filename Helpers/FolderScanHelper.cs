@@ -20,14 +20,17 @@ namespace DLGameViewer.Helpers {
             IFolderScannerService folderScannerService,
             IWebMetadataService webMetadataService,
             IDatabaseService databaseService,
-            ProgressUpdateCallback progressCallback
+            ProgressUpdateCallback progressCallback,
+            CancellationToken cancellationToken
         ) {
             // 스캔 시작 메시지
             string scanMessage = $"'{folderPath}' 폴더를 스캔 중입니다...";
             progressCallback(scanMessage, null, -1);
             
+            cancellationToken.ThrowIfCancellationRequested();
+
             // 폴더 스캔 시작
-            var localScannedGames = await folderScannerService.ScanDirectoryAsync(folderPath);
+            var localScannedGames = await folderScannerService.ScanDirectoryAsync(folderPath, cancellationToken);
 
             if (localScannedGames.Any()) {
                 string scanResultMessage = $"{localScannedGames.Count}개의 게임 폴더 발견, 정보 처리 중...";
@@ -38,8 +41,9 @@ namespace DLGameViewer.Helpers {
                 var semaphore = new SemaphoreSlim(5); 
 
                 foreach (var game in localScannedGames) {
+                    cancellationToken.ThrowIfCancellationRequested();
                     tasks.Add(Task.Run(async () => {
-                        await semaphore.WaitAsync();
+                        await semaphore.WaitAsync(cancellationToken);
                         try {
                             string initialStatusMessage = $"게임 폴더 정보 처리 시작: {Path.GetFileName(game.FolderPath)}, 식별자: {game.Identifier}";
                             progressCallback(initialStatusMessage, game, -1);
@@ -59,9 +63,9 @@ namespace DLGameViewer.Helpers {
                                 fetchedGameInfo.DateAdded = DateTime.Now;
 
                                 try{
-                                    await databaseService.AddGameAsync(fetchedGameInfo);
+                                    long newId = await databaseService.AddGameAsync(fetchedGameInfo);
                                     string successMessage = $"  -> '{fetchedGameInfo.Title}' ({game.Identifier}): 웹 메타데이터와 함께 데이터베이스에 추가됨.";
-                                    progressCallback(successMessage, fetchedGameInfo, 0);
+                                    progressCallback(successMessage, fetchedGameInfo, newId);
                                     // 성공적으로 추가된 게임을 scannedGamesOutput에 추가 (동기화 문제 고려 필요 시 Lock 사용)
                                     lock (scannedGamesOutput) {
                                        scannedGamesOutput.Add(fetchedGameInfo);
@@ -76,9 +80,9 @@ namespace DLGameViewer.Helpers {
                                 
                                 game.DateAdded = DateTime.Now; // 로컬 정보에도 추가 날짜 설정
                                 try{
-                                    await databaseService.AddGameAsync(game);
+                                    long newId = await databaseService.AddGameAsync(game);
                                     string localSuccessMessage = $"  -> '{game.Title}' ({game.Identifier}): 로컬 정보만 데이터베이스에 추가됨.";
-                                    progressCallback(localSuccessMessage, game, 0);
+                                    progressCallback(localSuccessMessage, game, newId);
                                     lock (scannedGamesOutput) {
                                         scannedGamesOutput.Add(game);
                                     }
@@ -120,7 +124,7 @@ namespace DLGameViewer.Helpers {
             progressCallback(scanMessage, null, -1);
 
             try {
-                var localScannedGames = await testScanner.ScanDirectoryAsync(folderPath);
+                var localScannedGames = await testScanner.ScanDirectoryAsync(folderPath, CancellationToken.None);
 
                 if (localScannedGames.Any()) {
                     string scanResultMessage = $"{localScannedGames.Count}개의 테스트 게임 생성됨, 데이터베이스에 추가 중...";

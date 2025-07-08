@@ -13,7 +13,7 @@ namespace DLGameViewer.Services {
         private readonly string[] _genres = { "RPG", "ADV", "SLG", "ACT", "RTS", "SIM" };
         private readonly string[] _gameTypes = { "RPG", "ADV", "SLG", "ACT", "RTS", "SIM" };
 
-        public async Task<List<GameInfo>> ScanDirectoryAsync(string folderPath) {
+        public async Task<List<GameInfo>> ScanDirectoryAsync(string folderPath, CancellationToken cancellationToken) {
             var games = new List<GameInfo>();
             var listFilePath = Path.Combine(folderPath, "RJGameList.txt");
 
@@ -21,8 +21,9 @@ namespace DLGameViewer.Services {
                 throw new FileNotFoundException("RJGameList.txt 파일을 찾을 수 없습니다.", listFilePath);
             }
 
-            var lines = await File.ReadAllLinesAsync(listFilePath);
+            var lines = await File.ReadAllLinesAsync(listFilePath, cancellationToken);
             foreach (var line in lines) {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (string.IsNullOrWhiteSpace(line)) continue;
 
                 var match = System.Text.RegularExpressions.Regex.Match(line, @"(RJ|VJ)\d{6,8}");
@@ -50,10 +51,11 @@ namespace DLGameViewer.Services {
 
             // 실제 폴더도 생성
             foreach (var game in games) {
+                cancellationToken.ThrowIfCancellationRequested();
                 Directory.CreateDirectory(game.FolderPath);
             }
 
-            return null;
+            return games;
         }
     }
 } 
