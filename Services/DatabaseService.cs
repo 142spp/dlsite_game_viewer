@@ -333,20 +333,24 @@ namespace DLGameViewer.Services {
             var parameters = new Dictionary<string, object?>();
 
             // Filtering
-            if (!string.IsNullOrWhiteSpace(searchTerm) && !string.IsNullOrWhiteSpace(searchField)) {
-                if (searchField.Equals("All", StringComparison.OrdinalIgnoreCase)) {
+            if (!string.IsNullOrWhiteSpace(searchTerm) && !string.IsNullOrWhiteSpace(searchField))
+            {
+                if (searchField.Equals("All", StringComparison.OrdinalIgnoreCase))
+                {
                     var otherFields = new[] { "Title", "Creator", "Identifier", "GameType" };
                     var otherConditions = otherFields.Select(field => $"{field} LIKE $GeneralSearchTerm COLLATE NOCASE");
-                    var genreCondition = "REPLACE(Genres, ' ', '') LIKE $GenreSearchTerm COLLATE NOCASE";
+                    var genreCondition = "Genres LIKE $GenreSearchTerm COLLATE NOCASE";
                     sqlBuilder.Append($" WHERE ({string.Join(" OR ", otherConditions)} OR {genreCondition})");
                     parameters["$GeneralSearchTerm"] = $"%{searchTerm}%";
-                    parameters["$GenreSearchTerm"] = $"%\"{searchTerm}%\"%" ;
-                } 
-                else if (searchField.Equals("Genres", StringComparison.OrdinalIgnoreCase)) {
-                    sqlBuilder.Append($" WHERE REPLACE({SanitizeIdentifier(searchField)}, ' ', '') LIKE $SearchTerm COLLATE NOCASE");
-                    parameters["$SearchTerm"] = $"%\"{searchTerm}%\"%" ;
+                    parameters["$GenreSearchTerm"] = $"%\"{searchTerm}\"%";
                 }
-                else {
+                else if (searchField.Equals("Genres", StringComparison.OrdinalIgnoreCase))
+                {
+                    sqlBuilder.Append($" WHERE Genres LIKE $SearchTerm COLLATE NOCASE");
+                    parameters["$SearchTerm"] = $"%\"{searchTerm}\"%";
+                }
+                else
+                {
                     sqlBuilder.Append($" WHERE {SanitizeIdentifier(searchField)} LIKE $SearchTerm COLLATE NOCASE");
                     parameters["$SearchTerm"] = $"%{searchTerm}%";
                 }
@@ -479,20 +483,24 @@ namespace DLGameViewer.Services {
             var sqlBuilder = new StringBuilder("SELECT COUNT(*) FROM GameInfo");
             var parameters = new Dictionary<string, object?>();
 
-            if (!string.IsNullOrWhiteSpace(searchTerm) && !string.IsNullOrWhiteSpace(searchField)) {
-                 if (searchField.Equals("All", StringComparison.OrdinalIgnoreCase)) {
+            if (!string.IsNullOrWhiteSpace(searchTerm) && !string.IsNullOrWhiteSpace(searchField))
+            {
+                if (searchField.Equals("All", StringComparison.OrdinalIgnoreCase))
+                {
                     var otherFields = new[] { "Title", "Creator", "Identifier", "GameType" };
                     var otherConditions = otherFields.Select(field => $"{field} LIKE $GeneralSearchTerm COLLATE NOCASE");
-                    var genreCondition = "REPLACE(Genres, ' ', '') LIKE $GenreSearchTerm COLLATE NOCASE";
+                    var genreCondition = "Genres LIKE $GenreSearchTerm COLLATE NOCASE";
                     sqlBuilder.Append($" WHERE ({string.Join(" OR ", otherConditions)} OR {genreCondition})");
                     parameters["$GeneralSearchTerm"] = $"%{searchTerm}%";
-                    parameters["$GenreSearchTerm"] = $"%\"{searchTerm}%\"%" ;
+                    parameters["$GenreSearchTerm"] = $"%\"{searchTerm}\"%";
                 }
-                else if (searchField.Equals("Genres", StringComparison.OrdinalIgnoreCase)) {
-                    sqlBuilder.Append($" WHERE REPLACE({SanitizeIdentifier(searchField)}, ' ', '') LIKE $SearchTerm COLLATE NOCASE");
-                    parameters["$SearchTerm"] = $"%\"{searchTerm}%\"%" ;
+                else if (searchField.Equals("Genres", StringComparison.OrdinalIgnoreCase))
+                {
+                    sqlBuilder.Append($" WHERE Genres LIKE $SearchTerm COLLATE NOCASE");
+                    parameters["$SearchTerm"] = $"%\"{searchTerm}\"%";
                 }
-                else {
+                else
+                {
                     sqlBuilder.Append($" WHERE {SanitizeIdentifier(searchField)} LIKE $SearchTerm COLLATE NOCASE");
                     parameters["$SearchTerm"] = $"%{searchTerm}%";
                 }

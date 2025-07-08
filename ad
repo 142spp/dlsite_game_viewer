@@ -1,0 +1,89 @@
+[33mcommit 42d36d1eaaf74cb17296f86059bf7fa250fd5f4a[m[33m ([m[1;36mHEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Sun Jul 6 15:03:25 2025 +0900
+
+    feat: tab기능, list 기능 추가
+
+[33mcommit 4577f395e8c51e83f568726201ab1baf1d1e2fc7[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Sat Jul 5 22:31:08 2025 +0900
+
+    refactor: Reorganize project structure for better clarity
+    
+    - Created a 'Views' directory to consolidate all UI-related files (XAML and code-behind).
+    - Moved MainWindow and all dialogs into the new 'Views' directory.
+    - Created a 'Styles/Themes' directory to group all theme-related XAML files.
+    - Updated namespaces, resource paths, and code references to reflect the new file structure.
+    - Ensured the project builds successfully after the reorganization.
+
+[33mcommit 7cddaa363770ae14962920bf190c153404588ba5[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Wed Jun 4 23:00:41 2025 +0900
+
+    Feat: Theme 추가
+
+[33mcommit 08675a41f667870ec5853d1323bf465ae89d8730[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Wed Jun 4 22:24:48 2025 +0900
+
+    .
+
+[33mcommit f6b7ed628ae58ba091b64a9570112076467b0e51[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Thu May 22 18:37:07 2025 +0900
+
+    Feat: 검색,정렬 최적화 및 페이지네이션
+
+[33mcommit 3edcadf1eb72569b365c7515f48dc622b1b92594[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Thu May 22 10:48:27 2025 +0900
+
+    Docs: Todo 리스트 수정
+
+[33mcommit 7ea091d0a0f05e5335eeaa52f6607f9f638c47e3[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Mon May 19 02:35:40 2025 +0900
+
+    Feat: Gameinfo 추가필드 메인윈도우에 적용
+
+[33mcommit edccbf5e5de36e3346ba746a4c70732baaa80944[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Mon May 19 01:45:40 2025 +0900
+
+    Feat: Gameinfo 필드 추가
+
+[33mcommit c3148b2257bc4b15e4a1616c87182948c8a710e9[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Sun May 18 02:02:34 2025 +0900
+
+    Fix: 우클릭 컨텍스트 메뉴 고침
+
+[33mcommit bd24c99b207281c9cd8401411c8257b1c467b2d0[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Sun May 18 01:14:26 2025 +0900
+
+    Feat: 정렬기능 추가
+
+[33mcommit de4798441aa7094f6fd12fc16dd79cef8eda70b8[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Wed May 14 00:21:55 2025 +0900
+
+    Refactor: 폴더 스캔 최적화
+
+[33mcommit c9f429b876bc8234cc1d3ef78152b67d8aa9c129[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Mon May 12 03:05:54 2025 +0900
+
+    Feat: 다이얼로그 및 헬퍼 클래스 생성
+
+[33mcommit 1cf46cfd94da4824a2fdce19347dfc1a0b7a7947[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Sun May 11 13:47:29 2025 +0900
+
+    Feat: 서비스 구현
+
+[33mcommit 63af80ece1e8a782306da54c51ee821cd54685b5[m
+Author: ehdrm <ehdrm@example.com>
+Date:   Sat May 10 14:06:47 2025 +0900
+
+    initial commit
