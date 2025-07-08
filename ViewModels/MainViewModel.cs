@@ -92,6 +92,7 @@ namespace DLGameViewer.ViewModels
             {
                 if (SetProperty(ref _searchText, value))
                 {
+                    (ClearSearchCommand as RelayCommand)?.RaiseCanExecuteChanged();
                     _searchCancellationSource?.Cancel();
                     _searchCancellationSource = new CancellationTokenSource();
                     var token = _searchCancellationSource.Token;

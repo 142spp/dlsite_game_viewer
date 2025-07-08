@@ -20,6 +20,7 @@
         <utils:PathToImageSourceConverter x:Key="PathToImageSourceConverterInstance"/>
         <utils:ThemeTypeConverter x:Key="ThemeTypeConverter"/>
         <utils:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <utils:StringNotEmptyToBoolConverter x:Key="StringNotEmptyToBoolConverter"/>
         <utils:BooleanToInverseBooleanConverter x:Key="BooleanToInverseBooleanConverter"/>
         <utils:BooleanToTextConverter x:Key="BooleanToTextConverter"/>
     </Window.Resources>
@@ -67,7 +68,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="3*"/>
                         </Grid.ColumnDefinitions>
                         
                         <ComboBox Grid.Column="0" Width="100" Height="30" Margin="0,0,5,0"
@@ -78,7 +79,7 @@
                         
                         <TextBox Grid.Column="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
                                  Height="30" VerticalAlignment="Center" 
-                                 Padding="0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
+                                 Padding="5,0,25,0" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}"
                                  Background="{DynamicResource TextBoxBackgroundBrush}"
                                  Foreground="{DynamicResource ForegroundBrush}"
                                  VerticalContentAlignment="Center">
@@ -89,9 +90,11 @@
                                             <ControlTemplate TargetType="TextBox">
                                                 <Border BorderThickness="{TemplateBinding BorderThickness}" 
                                                         BorderBrush="{TemplateBinding BorderBrush}"
-                                                        Background="{TemplateBinding Background}">
+                                                        Background="{TemplateBinding Background}"
+                                                        CornerRadius="3">
                                                     <Grid>
-                                                        <TextBlock Text="게임 검색..." Margin="5,0,0,0"
+                                                        <TextBlock Text="게임 검색..." Margin="0"
+                                                                   HorizontalAlignment="Center"
                                                                    VerticalAlignment="Center"
                                                                    Foreground="{DynamicResource PlaceholderBrush}"
                                                                    Visibility="{Binding Text.IsEmpty, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
@@ -105,6 +108,24 @@
                                 </Style>
                             </TextBox.Style>
                         </TextBox>
+
+                        <Button Grid.Column="1"
+                                Command="{Binding ClearSearchCommand}"
+                                Content="✕"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Width="20" Height="20" Margin="0,0,5,0">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource CloseButtonStyle}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SearchText, Converter={StaticResource StringNotEmptyToBoolConverter}}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </Grid>
                     
                     <!-- 정렬 컨트롤 영역 -->
