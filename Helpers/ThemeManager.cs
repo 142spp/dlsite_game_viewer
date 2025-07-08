@@ -6,8 +6,6 @@ namespace DLGameViewer.Helpers {
     public enum ThemeType {
         Light,
         Dark,
-        DeepOcean,
-        CrimsonNight,
     }
 
     public class ThemeManager {
@@ -167,12 +165,6 @@ namespace DLGameViewer.Helpers {
                     newTheme = ThemeType.Dark;
                     break;
                 case ThemeType.Dark:
-                    newTheme = ThemeType.DeepOcean;
-                    break;
-                case ThemeType.DeepOcean:
-                    newTheme = ThemeType.CrimsonNight;
-                    break;
-                case ThemeType.CrimsonNight:
                     newTheme = ThemeType.Light;
                     break;
                 default:
