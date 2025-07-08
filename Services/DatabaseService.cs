@@ -335,13 +335,21 @@ namespace DLGameViewer.Services {
             // Filtering
             if (!string.IsNullOrWhiteSpace(searchTerm) && !string.IsNullOrWhiteSpace(searchField)) {
                 if (searchField.Equals("All", StringComparison.OrdinalIgnoreCase)) {
-                    var searchableFields = new[] { "Title", "Creator", "Identifier", "Genres", "GameType" };
-                    var searchConditions = searchableFields.Select(field => $"{field} LIKE $SearchTerm");
-                    sqlBuilder.Append($" WHERE ({string.Join(" OR ", searchConditions)})");
-                } else {
-                    sqlBuilder.Append($" WHERE {SanitizeIdentifier(searchField)} LIKE $SearchTerm");
+                    var otherFields = new[] { "Title", "Creator", "Identifier", "GameType" };
+                    var otherConditions = otherFields.Select(field => $"{field} LIKE $GeneralSearchTerm COLLATE NOCASE");
+                    var genreCondition = "REPLACE(Genres, ' ', '') LIKE $GenreSearchTerm COLLATE NOCASE";
+                    sqlBuilder.Append($" WHERE ({string.Join(" OR ", otherConditions)} OR {genreCondition})");
+                    parameters["$GeneralSearchTerm"] = $"%{searchTerm}%";
+                    parameters["$GenreSearchTerm"] = $"%\"{searchTerm}%\"%" ;
+                } 
+                else if (searchField.Equals("Genres", StringComparison.OrdinalIgnoreCase)) {
+                    sqlBuilder.Append($" WHERE REPLACE({SanitizeIdentifier(searchField)}, ' ', '') LIKE $SearchTerm COLLATE NOCASE");
+                    parameters["$SearchTerm"] = $"%\"{searchTerm}%\"%" ;
                 }
-                parameters["$SearchTerm"] = $"%{searchTerm}%";
+                else {
+                    sqlBuilder.Append($" WHERE {SanitizeIdentifier(searchField)} LIKE $SearchTerm COLLATE NOCASE");
+                    parameters["$SearchTerm"] = $"%{searchTerm}%";
+                }
             }
 
             // 특수 정렬 케이스 처리
@@ -473,13 +481,21 @@ namespace DLGameViewer.Services {
 
             if (!string.IsNullOrWhiteSpace(searchTerm) && !string.IsNullOrWhiteSpace(searchField)) {
                  if (searchField.Equals("All", StringComparison.OrdinalIgnoreCase)) {
-                    var searchableFields = new[] { "Title", "Creator", "Identifier", "Genres", "GameType" };
-                    var searchConditions = searchableFields.Select(field => $"{field} LIKE $SearchTerm");
-                    sqlBuilder.Append($" WHERE ({string.Join(" OR ", searchConditions)})");
-                } else {
-                    sqlBuilder.Append($" WHERE {SanitizeIdentifier(searchField)} LIKE $SearchTerm");
+                    var otherFields = new[] { "Title", "Creator", "Identifier", "GameType" };
+                    var otherConditions = otherFields.Select(field => $"{field} LIKE $GeneralSearchTerm COLLATE NOCASE");
+                    var genreCondition = "REPLACE(Genres, ' ', '') LIKE $GenreSearchTerm COLLATE NOCASE";
+                    sqlBuilder.Append($" WHERE ({string.Join(" OR ", otherConditions)} OR {genreCondition})");
+                    parameters["$GeneralSearchTerm"] = $"%{searchTerm}%";
+                    parameters["$GenreSearchTerm"] = $"%\"{searchTerm}%\"%" ;
                 }
-                parameters["$SearchTerm"] = $"%{searchTerm}%";
+                else if (searchField.Equals("Genres", StringComparison.OrdinalIgnoreCase)) {
+                    sqlBuilder.Append($" WHERE REPLACE({SanitizeIdentifier(searchField)}, ' ', '') LIKE $SearchTerm COLLATE NOCASE");
+                    parameters["$SearchTerm"] = $"%\"{searchTerm}%\"%" ;
+                }
+                else {
+                    sqlBuilder.Append($" WHERE {SanitizeIdentifier(searchField)} LIKE $SearchTerm COLLATE NOCASE");
+                    parameters["$SearchTerm"] = $"%{searchTerm}%";
+                }
             }
 
             using (var connection = new SqliteConnection($"Data Source={_databasePath}")) {
