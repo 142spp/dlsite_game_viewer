@@ -147,8 +147,12 @@ namespace DLGameViewer.ViewModels
         public ICommand RatingDownCommand { get; }
         public ICommand SelectImageCommand { get; }
         public ICommand CopyIdentifierCommand { get; }
+        public ICommand SearchTagCommand { get; }
 
         public event EventHandler<bool> RequestClose;
+        public event Action<string, string> SearchRequested;
+
+        public List<string> GenreList { get; private set; }
 
         public GameInfoViewModel(GameInfo game)
         {
@@ -166,7 +170,8 @@ namespace DLGameViewer.ViewModels
             RatingDownCommand = CreateCommand(param => ExecuteRatingDown());
             SelectImageCommand = CreateCommand(param => ExecuteSelectImage(param));
             CopyIdentifierCommand = CreateCommand(param => ExecuteCopyIdentifier());
-            
+            SearchTagCommand = new RelayCommand(param => ExecuteSearchTag(param));
+
             // 메시지 타이머 초기화
             _messageTimer = new DispatcherTimer
             {
@@ -185,6 +190,7 @@ namespace DLGameViewer.ViewModels
             Title = _game.Title;
             Creator = _game.Creator;
             Genres = string.Join(", ", _game.Genres ?? new List<string>());
+            GenreList = _game.Genres?.Where(g => !string.IsNullOrWhiteSpace(g)).Select(g => g.Trim()).ToList() ?? new List<string>();
             
             double currentRating = MinRating;
             if (double.TryParse(_game.Rating, NumberStyles.Any, CultureInfo.InvariantCulture, out double parsedRating))
@@ -244,8 +250,6 @@ namespace DLGameViewer.ViewModels
             // ViewModel에서 Model로 데이터 업데이트
             _game.Title = Title;
             _game.Creator = Creator;
-            _game.Genres = Genres.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(g => g.Trim()).ToList();
             _game.Rating = Rating;
             _game.CoverImageUrl = CoverImageUrl;
             // CoverImagePath, LocalImagePath는 여기서 변경하지 않음
@@ -331,6 +335,20 @@ namespace DLGameViewer.ViewModels
         public GameInfo GetUpdatedGame()
         {
             return _game;
+        }
+
+        private void ExecuteSearchTag(object parameter)
+        {
+            if (parameter is object[] values && values.Length == 2)
+            {
+                string category = values[0] as string;
+                string term = values[1] as string;
+
+                if (!string.IsNullOrEmpty(category) && !string.IsNullOrEmpty(term))
+                {
+                    SearchRequested?.Invoke(category, term);
+                }
+            }
         }
     }
 } 

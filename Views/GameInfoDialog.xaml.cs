@@ -14,6 +14,8 @@ namespace DLGameViewer.Dialogs
         
         // 게임 정보를 외부에서 접근할 수 있도록 제공
         public GameInfo Game => _viewModel.GetUpdatedGame();
+        public string SearchCategory { get; private set; }
+        public string SearchTerm { get; private set; }
 
         public GameInfoDialog(GameInfo gameInfo)
         {
@@ -23,12 +25,21 @@ namespace DLGameViewer.Dialogs
             // ViewModel 생성 및 이벤트 연결
             _viewModel = new GameInfoViewModel(gameInfo);
             _viewModel.RequestClose += ViewModel_RequestClose;
+            _viewModel.SearchRequested += ViewModel_SearchRequested;
             
             // 데이터 컨텍스트 설정
             DataContext = _viewModel;
             
             // 윈도우 크기 변경 이벤트 연결
             SizeChanged += GameInfoDialog_SizeChanged;
+        }
+
+        private void ViewModel_SearchRequested(string category, string term)
+        {
+            SearchCategory = category;
+            SearchTerm = term;
+            DialogResult = true; // Or a custom result if you want to differentiate
+            Close();
         }
 
         // 윈도우 크기 변경 시 이미지 다시 로드 (성능 최적화를 위해 필요한 경우에만 새로고침)

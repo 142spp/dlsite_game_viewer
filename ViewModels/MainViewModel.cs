@@ -477,10 +477,19 @@ namespace DLGameViewer.ViewModels {
 
             var infoDialog = new GameInfoDialog(gameDetails) { Owner = Application.Current.MainWindow };
             if (infoDialog.ShowDialog() == true) {
-                if (infoDialog.Game != null) {
+                // Check if a search was requested from the dialog
+                if (!string.IsNullOrEmpty(infoDialog.SearchTerm))
+                {
+                    SearchField = infoDialog.SearchCategory;
+                    SearchText = infoDialog.SearchTerm;
+                    // The search will be triggered automatically by the SearchText property setter
+                }
+                else if (infoDialog.Game != null) 
+                {
+                    // Otherwise, it was a normal save operation
                     await _databaseService.UpdateGameAsync(infoDialog.Game);
                     await LoadGamesToGridAsync();
-                    StatusMessage = "게임 정보 업데이트 성공";
+                    StatusMessage = "���임 정보 업데이트 성공";
                 }
             }
         }

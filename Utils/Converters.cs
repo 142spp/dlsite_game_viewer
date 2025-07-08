@@ -195,4 +195,18 @@ namespace DLGameViewer.Utils {
             throw new NotImplementedException();
         }
     }
+
+    // MultiBinding의 값들을 객체 배열로 변환하는 컨버터
+    public class ArrayConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            return values.Clone();
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 } 

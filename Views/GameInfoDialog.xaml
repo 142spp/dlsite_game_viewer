@@ -20,6 +20,7 @@
         styles:CustomWindowStyle.WindowType="GameInfoDialog">
     <Window.Resources>
         <conv:PathToImageSourceConverter x:Key="PathToImageSourceConverterInstance"/>
+        <conv:ArrayConverter x:Key="ArrayConverter"/>
     </Window.Resources>
     <Grid Margin="15">
         <Grid.RowDefinitions>
@@ -60,16 +61,48 @@
                              Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
 
                     <Label Content="제작자/서클:" Margin="0,10,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
-                    <TextBox Text="{Binding Creator}" Margin="5" Padding="5" 
-                             Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+                    <Button Content="{Binding Creator}" Style="{StaticResource TagButtonStyle}" HorizontalAlignment="Left"
+                            Command="{Binding SearchTagCommand}">
+                        <Button.CommandParameter>
+                            <MultiBinding Converter="{StaticResource ArrayConverter}">
+                                <Binding Source="제작자"/>
+                                <Binding Path="Creator"/>
+                            </MultiBinding>
+                        </Button.CommandParameter>
+                    </Button>
 
                     <Label Content="게임 종류:" Margin="0,5,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
-                    <TextBox Text="{Binding GameType}" Margin="5,0,5,5" Padding="5"
-                             Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+                    <Button Content="{Binding GameType}" Style="{StaticResource TagButtonStyle}" HorizontalAlignment="Left"
+                            Command="{Binding SearchTagCommand}">
+                        <Button.CommandParameter>
+                            <MultiBinding Converter="{StaticResource ArrayConverter}">
+                                <Binding Source="게임 타입"/>
+                                <Binding Path="GameType"/>
+                            </MultiBinding>
+                        </Button.CommandParameter>
+                    </Button>
 
-                    <Label Content="장르 (쉼표로 구분):" Margin="0,10,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
-                    <TextBox Text="{Binding Genres}" Margin="5" Padding="5" AcceptsReturn="True" TextWrapping="Wrap"
-                             Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource ForegroundBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+                    <Label Content="장르:" Margin="0,10,0,0" Foreground="{DynamicResource ForegroundBrush}"/>
+                    <ItemsControl ItemsSource="{Binding GenreList}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding}" Style="{StaticResource TagButtonStyle}"
+                                        Command="{Binding DataContext.SearchTagCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}">
+                                    <Button.CommandParameter>
+                                        <MultiBinding Converter="{StaticResource ArrayConverter}">
+                                            <Binding Source="장르"/>
+                                            <Binding/>
+                                        </MultiBinding>
+                                    </Button.CommandParameter>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
                     <StackPanel Orientation="Horizontal" Margin="0,5,5,0">
                         <Label Content="평점:" Margin="0,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource ForegroundBrush}"/>
