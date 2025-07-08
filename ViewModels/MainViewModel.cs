@@ -585,12 +585,20 @@ namespace DLGameViewer.ViewModels
 
         private async Task RefreshGameDataAsync(GameInfo? game)
         {
-            if (game == null) { MessageBox.Show("게임 정보를 찾을 수 없습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Error); return; }
+            if (game == null)
+            {
+                MessageBox.Show("게임 정보를 찾을 수 없습니다.", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             try
             {
-                IsLoading = true;
                 StatusMessage = $"{game.Title} 데이터 갱신 중...";
+
+                // 웹에서 새로운 메타데이터 가져오기
                 GameInfo updatedInfo = await _webMetadataService.FetchMetadataAsync(game.Identifier);
+
+                // 기존 데이터와 병합 (로컬 정보는 유지)
                 updatedInfo.Id = game.Id;
                 updatedInfo.FolderPath = game.FolderPath;
                 updatedInfo.SaveFolderPath = game.SaveFolderPath;
@@ -600,8 +608,27 @@ namespace DLGameViewer.ViewModels
                 updatedInfo.PlayTime = game.PlayTime;
                 updatedInfo.FileSizeInBytes = game.FileSizeInBytes;
                 updatedInfo.UserMemo = game.UserMemo;
+                updatedInfo.CoverImagePath = game.CoverImagePath; // 로컬 커버 이미지 경로 유지
+
+                // 데이터베이스 업데이트
                 await _databaseService.UpdateGameAsync(updatedInfo);
-                await LoadGamesToGridAsync();
+
+                // UI에서 직접 항목 업데이트
+                var gameInCollection = Games.FirstOrDefault(g => g.Id == game.Id);
+                if (gameInCollection != null)
+                {
+                    // 속성을 하나씩 업데이트하여 UI에 변경 알림
+                    gameInCollection.Title = updatedInfo.Title;
+                    gameInCollection.Creator = updatedInfo.Creator;
+                    gameInCollection.GameType = updatedInfo.GameType;
+                    gameInCollection.Genres = updatedInfo.Genres;
+                    gameInCollection.SalesCount = updatedInfo.SalesCount;
+                    gameInCollection.Rating = updatedInfo.Rating;
+                    gameInCollection.RatingCount = updatedInfo.RatingCount;
+                    gameInCollection.ReleaseDate = updatedInfo.ReleaseDate;
+                    // CoverImagePath는 웹에서 새로 받아오지 않으므로 업데이트하지 않음
+                }
+
                 StatusMessage = $"{game.Title} 데이터 갱신 성공";
                 MessageBox.Show($"{game.Title} 게임의 메타데이터가 성공적으로 갱신되었습니다.", "갱신 완료", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -610,7 +637,10 @@ namespace DLGameViewer.ViewModels
                 StatusMessage = "데이터 갱신 실패";
                 MessageBox.Show($"데이터 갱신 중 오류 발생: {ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            finally { IsLoading = false; }
+            finally
+            {
+                // IsLoading을 사용하지 않으므로 관련 코드 없음
+            }
         }
 
         private void OpenDlSite(GameInfo? game)
